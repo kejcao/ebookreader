@@ -5,10 +5,10 @@
 	import localForage from 'localforage';
 	import ePub from 'epubjs';
 
-	let dragover = false;
-	let metadata, noBookLoaded = true, showTOC = false;
-	let TOC = [];
-	let rendition;
+	import Toc from "./TOC.svelte";
+
+	let dragover = false, noBookLoaded = true, showPanel = false;
+	let metadata, rendition, TOC = [];
 
 	function getFile(event) {
 		let file;
@@ -85,10 +85,10 @@
 		const keydown = e => {
 			switch (e.key) {
 				case 't':
-					showTOC = !showTOC;
+					showPanel = !showPanel;
 					break;
 				case 'Escape':
-					showTOC = false;
+					showPanel = false;
 					break;
 			}
 		};
@@ -131,7 +131,7 @@
 			<h1 style="text-align:center">Drop file to get started!</h1>
 		</div>
 	{:else}
-		{#if showTOC}
+		{#if showPanel}
 			<div class="panel">
 				<div>
 					<a
@@ -142,25 +142,16 @@
 							return false;
 						}}
 					>
-						<i>RESTART</i>
+						<span class="important">RESTART</span>
 					</a>
 				</div>
 				<hr />
 				<ul class="toc">
-					{#each TOC as {id, href, label}}
-						<li>
-							<a
-								id="chap-{id}"
-								href="#"
-								on:click={() => {
-									rendition.display(href);
-									showTOC = false;
-									return false;
-								}}
-							>
-								{label.trim()}
-							</a>
-						</li>
+					{#each TOC as t}
+						<Toc {...t}
+							on:close={() => { showPanel = false; }}
+							rendition={rendition}
+						/>
 					{/each}
 				</ul>
 			</div>
@@ -169,10 +160,6 @@
 </main>
 
 <style>
-	iframe {
-		font-family: 'EB Garamond', serif;
-	}
-
 	.panel {
 		position: fixed;
 		width: 38em;
@@ -185,14 +172,10 @@
 		overflow-y: scroll;
 
 		background: white;
-		border: 2px solid black;
-		border-radius: 16px;
+		border: 3px solid rgb(48, 48, 48);
+		border-radius: 12px;
+		box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
 		padding: 1em 2em;
-	}
-
-	.toc {
-		list-style: none;
-		padding: 0;
 	}
 
 	.dropZone {
@@ -207,20 +190,22 @@
 		visibility: hidden;
 	}
 
-	:global(.epub-container) {
-		background: white;
-	}
-
-	.panel a {
+	/* style TOC entries */
+	:global(.panel a) {
 		text-decoration: none;
 		color: inherit;
 		font-family: monospace;
 	}
-
-	.panel a:hover {
+	:global(.panel a:hover) {
 		font-weight: 700;
 	}
 
+	.toc ul {
+		list-style: none;
+		padding: 0;
+	}
+
+	/* hide scroll bars */
 	.panel::-webkit-scrollbar {
 		display: none;
 	}
@@ -236,4 +221,13 @@
 		scrollbar-width: none;
 		-ms-overflow-style: none;
 	}
+
+	/* style links on top of .panel */
+	.important {
+		font-weight: 700;
+	}
+	.important:hover {
+		color: red;
+	}
+
 </style>
