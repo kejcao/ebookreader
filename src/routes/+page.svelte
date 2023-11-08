@@ -1,80 +1,108 @@
 <script>
-	let dragover = false;
-	let ref;
+	import { onMount } from 'svelte';
+	import localForage from 'localforage';
+	import ePub from 'epubjs';
 
-	function getFile(e) {
+	let dragover = false;
+
+	function getFile(event) {
 		let file;
-		if (e.dataTransfer.items) {
-			const x = e.dataTransfer.items[0];
+		if (event.dataTransfer.items) {
+			const x = event.dataTransfer.items[0];
 			if (x.kind === "file") {
 				file = x.getAsFile();
 			}
 		} else {
-			file = e.dataTransfer.files[0];
+			file = event.dataTransfer.files[0];
 		}
 		return file;
 	}
-</script>
 
-<svelte:head>
-	<title>Home</title>
-	<meta name="description" content="Svelte demo app" />
-	<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.1.5/jszip.min.js"></script>
-	<script src="https://cdn.jsdelivr.net/npm/epubjs@0.3.93/dist/epub.min.js"></script>
-</svelte:head>
-
-<!-- svelte-ignore a11y-no-static-element-interactions -->
-<main>
-	<div class="msg">
-		<h1>{dragover ? '' : 'Drag & drop or select an ebook'}</h1>
-	</div>
-	<div
-		class="dragndrop {dragover ? 'dragover' : ''}"
-		on:drop={e => {
-			e.preventDefault();
-			dragover = false;
-
-			let book = ePub(getFile(e));
+	function tryRender() {
+		localForage.getItem('ebook', (err, value) => {
+			if (err) { return; }
+			let book = ePub(value);
 			let rendition = book.renderTo(
 				document.body,
 				{
 					manager: "continuous",
 					flow: "scrolled", width: "100%"
-				});
+					});
 			let displayed = rendition.display();
 
-			displayed.then(renderer => { });
-			book.loaded.navigation.then(toc => {
-				console.log(toc);
-			});
-		}}
-		on:dragover={e => {
+			// displayed.then(renderer => { });
+			// book.loaded.navigation.then(toc => {
+			// 	console.log(toc);
+			// });
+		})
+	}
+
+	let panel;
+
+	onMount(() => {
+		tryRender();
+
+		const show = e => {
 			e.preventDefault();
-			dragover = true;
-		}}
-		on:dragleave={e => {
-			dragover = false;
-		}}
-	>
-	</div>
+			e.dataTransfer.dropEffect = 'copy';
+			panel.style.visibility = 'visible';
+
+		};
+		const hide = e => {
+			if (!e.fromElement) {
+				panel.style.visibility = 'hidden';
+			}
+		};
+
+		const dragover = e => {
+			e.preventDefault();
+		};
+		const drop = e => {
+			e.preventDefault();
+
+			localForage.setItem('ebook', getFile(e), err => {
+				if (err) {
+					console.error(err);
+					alert('fuck');
+				}
+
+				location.reload();
+			});
+		};
+
+		document.addEventListener('dragenter', show);
+		document.addEventListener('dragover', dragover);
+		document.addEventListener('drop', drop);
+		document.addEventListener('dragleave', hide);
+		return () => {
+			document.removeEventListener('dragenter', show);
+			document.removeEventListener('dragover', dragover);
+			document.removeEventListener('drop', drop);
+			document.removeEventListener('dragleave', hide);
+		}
+	});
+
+</script>
+
+<svelte:head>
+	<title>Home</title>
+	<meta name="description" content="Svelte demo app" />
+</svelte:head>
+
+<main>
+	<div bind:this={panel} class="dropZone"></div>
 </main>
 
 <style>
-	.dragndrop {
-		position: absolute;
+	.dropZone {
+		background: gray;
+		position: fixed;
 		top: 0;
 		left: 0;
 		width: 100%;
 		height: 100%;
-		opacity: 0;
-		background-color: skyblue;
-	}
-
-	.msg {
-		text-align: center;
-	}
-
-	.dragover {
-		opacity: 1;
+		z-index: 999;
+		opacity: 0.6;
+		visibility: hidden;
 	}
 </style>

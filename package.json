@@ -19,5 +19,10 @@
 		"typescript": "^5.0.0",
 		"vite": "^4.4.2"
 	},
-	"type": "module"
+	"type": "module",
+	"dependencies": {
+		"epubjs": "^0.3.93",
+		"jszip": "^3.10.1",
+		"localforage": "^1.10.0"
+	}
 }
