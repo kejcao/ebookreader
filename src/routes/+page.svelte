@@ -41,6 +41,22 @@
 				});
 			let displayed = rendition.display();
 
+			rendition.hooks.content.register(contents => {
+				contents.addStylesheetCss(`
+					@import url('https://fonts.googleapis.com/css2?family=EB+Garamond:ital,wght@0,400;0,700;1,400;1,700&display=swap');
+					body {
+						font-family: "EB Garamond", serif !important;
+						font-size: 1.2rem !important;
+					}
+					
+					img {
+						width: 100% !important;
+						height: auto !important;
+						object-fit: contain !important;
+					}
+				`);
+			});
+
 			book.loaded.metadata.then(x => { metadata = x; });
 			book.loaded.navigation.then(toc => {
 				toc.forEach((chapter, index) => {
@@ -119,9 +135,6 @@
 <svelte:head>
 	<title>{metadata?.title ?? "untitled"}</title>
 	<meta name="description" content={metadata?.description ?? "No description."} />
-	<link rel="preconnect" href="https://fonts.googleapis.com">
-	<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-	<link href="https://fonts.googleapis.com/css2?family=EB+Garamond:ital,wght@0,400;0,700;1,400;1,700&display=swap" rel="stylesheet">
 </svelte:head>
 
 <div class="dropZone"></div>
