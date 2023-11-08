@@ -220,4 +220,20 @@
 	.panel a:hover {
 		font-weight: 700;
 	}
+
+	.panel::-webkit-scrollbar {
+		display: none;
+	}
+	.panel {
+		scrollbar-width: none;
+		-ms-overflow-style: none;
+	}
+
+	:global(body::-webkit-scrollbar) {
+		display: none;
+	}
+	:global(body) {
+		scrollbar-width: none;
+		-ms-overflow-style: none;
+	}
 </style>
