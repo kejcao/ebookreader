@@ -1,10 +1,14 @@
 <script>
+// @ts-nocheck
+
 	import { onMount } from 'svelte';
 	import localForage from 'localforage';
 	import ePub from 'epubjs';
 
 	let dragover = false;
-	let panel, metadata, blank = true;
+	let metadata, noBookLoaded = true, showTOC = false;
+	let TOC = [];
+	let rendition;
 
 	function getFile(event) {
 		let file;
@@ -23,36 +27,24 @@
 		localForage.getItem('ebook', (err, value) => {
 			if (err) { alert('fuck'); return; }
 			if (!value) {
-				blank = true;
+				noBookLoaded = true;
 				return;
 			}
-			blank = false;
+			noBookLoaded = false;
 			let book = ePub(value);
-			let rendition = book.renderTo(
-				document.body,
+			rendition = book.renderTo(
+				document.querySelector('main'),
 				{
 					manager: "continuous",
-					flow: "scrolled", width: "100%"
+					flow: "scrolled", width: "100%",
+					fullsize: true
 				});
 			let displayed = rendition.display();
 
 			book.loaded.metadata.then(x => { metadata = x; });
 			book.loaded.navigation.then(toc => {
 				toc.forEach((chapter, index) => {
-					const x = document.querySelector('.toc');
-					
-					let item = document.createElement('li');
-					let link = document.createElement('a');
-					link.id = `chapter-${chapter.id}`;
-					link.href = chapter.href;
-					link.innerText = chapter.label.trim();
-					link.classList.add('link');
-					link.onclick = () => {
-						rendition.display(link.getAttribute("href"));
-						return false;
-					};
-					item.appendChild(link);
-					x.appendChild(item);
+					TOC.push(chapter);
 				});
 			});
 		})
@@ -60,6 +52,8 @@
 
 	onMount(() => {
 		tryRender();
+
+		const panel = document.querySelector('#dropZone')
 
 		const show = e => {
 			e.preventDefault();
@@ -88,11 +82,32 @@
 			});
 		};
 
+		const keydown = e => {
+			switch (e.key) {
+				case 't':
+					showTOC = !showTOC;
+					break;
+				case 'Escape':
+					showTOC = false;
+					break;
+			}
+		};
+
+		const keyup = e => {
+
+		};
+
+		document.addEventListener('keydown', keydown);
+		document.addEventListener('keyup', keyup);
+
 		document.addEventListener('dragenter', show);
 		document.addEventListener('dragover', dragover);
 		document.addEventListener('drop', drop);
 		document.addEventListener('dragleave', hide);
 		return () => {
+			document.removeEventListener('keydown', keydown);
+			document.removeEventListener('keyup', keyup);
+
 			document.removeEventListener('dragenter', show);
 			document.removeEventListener('dragover', dragover);
 			document.removeEventListener('drop', drop);
@@ -104,46 +119,80 @@
 <svelte:head>
 	<title>{metadata?.title ?? "untitled"}</title>
 	<meta name="description" content={metadata?.description ?? "No description."} />
+	<link rel="preconnect" href="https://fonts.googleapis.com">
+	<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+	<link href="https://fonts.googleapis.com/css2?family=EB+Garamond:ital,wght@0,400;0,700;1,400;1,700&display=swap" rel="stylesheet">
 </svelte:head>
 
+<div class="dropZone"></div>
 <main>
-	{#if blank}
-		<div class="center">
-			<h1>Drop file to get started!</h1>
+	{#if noBookLoaded}
+		<div>
+			<h1 style="text-align:center">Drop file to get started!</h1>
 		</div>
 	{:else}
-		<div class="left">
-			<div>
-				<a on:click={() => {
-					localForage.clear();
-					location.reload();
-					return false;
-				}}>restart</a>
+		{#if showTOC}
+			<div class="panel">
+				<div>
+					<a
+						href="#"
+						on:click={() => {
+							localForage.clear();
+							location.reload();
+							return false;
+						}}
+					>
+						<i>RESTART</i>
+					</a>
+				</div>
+				<hr />
+				<ul class="toc">
+					{#each TOC as {id, href, label}}
+						<li>
+							<a
+								id="chap-{id}"
+								href="#"
+								on:click={() => {
+									rendition.display(href);
+									showTOC = false;
+									return false;
+								}}
+							>
+								{label.trim()}
+							</a>
+						</li>
+					{/each}
+				</ul>
 			</div>
-			<ul class="toc"></ul>
-		</div>
+		{/if}
 	{/if}
-	<div bind:this={panel} class="dropZone"></div>
 </main>
 
 <style>
-	.center {
-		text-align: center;
+	iframe {
+		font-family: 'EB Garamond', serif;
+	}
+
+	.panel {
+		position: fixed;
+		width: 38em;
+		height: 60%;
+		top: 50%;
+		left: 50%;
+		transform: translate(-50%, -50%);
+
+		z-index: 1;
+		overflow-y: scroll;
+
+		background: white;
+		border: 2px solid black;
+		border-radius: 16px;
+		padding: 1em 2em;
 	}
 
 	.toc {
 		list-style: none;
 		padding: 0;
-	}
-
-	.left {
-		position: fixed;
-		top: 0;
-		left: 0;
-		border: 2px solid black;
-		border-radius: 16px;
-		padding: 1em 2em;
-		margin: 1em 1em;
 	}
 
 	.dropZone {
@@ -158,24 +207,17 @@
 		visibility: hidden;
 	}
 
-	.left a {
-		text-decoration: none;
-		color: inherit;
-		font-family: monospace;
-		text-transform: uppercase;
-	}
-
 	:global(.epub-container) {
 		background: white;
 	}
 
-	:global(.left a) {
+	.panel a {
 		text-decoration: none;
 		color: inherit;
 		font-family: monospace;
 	}
 
-	:global(.left a:hover) {
+	.panel a:hover {
 		font-weight: 700;
 	}
 </style>
