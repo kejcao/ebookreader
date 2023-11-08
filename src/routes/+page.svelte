@@ -69,16 +69,16 @@
 	onMount(() => {
 		tryRender();
 
-		const panel = document.querySelector('#dropZone')
+		const dropZone = document.querySelector('#dropZone')
 
 		const show = e => {
 			e.preventDefault();
 			e.dataTransfer.dropEffect = 'copy';
-			panel.style.visibility = 'visible';
+			dropZone.style.visibility = 'visible';
 		};
 		const hide = e => {
 			if (!e.fromElement) {
-				panel.style.visibility = 'hidden';
+				dropZone.style.visibility = 'hidden';
 			}
 		};
 
@@ -137,7 +137,7 @@
 	<meta name="description" content={metadata?.description ?? "No description."} />
 </svelte:head>
 
-<div class="dropZone"></div>
+<div id="dropZone"></div>
 <main>
 	{#if noBookLoaded}
 		<div>
@@ -191,7 +191,7 @@
 		padding: 1em 2em;
 	}
 
-	.dropZone {
+	#dropZone {
 		background: gray;
 		position: fixed;
 		top: 0;
