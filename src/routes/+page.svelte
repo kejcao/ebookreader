@@ -7,7 +7,7 @@
 
 	import Toc from "./TOC.svelte";
 
-	let dragover = false, noBookLoaded = true, showPanel = false;
+	let dragover = false, noBookLoaded = false, showPanel = false;
 	let metadata, rendition, TOC = [];
 
 	function getFile(event) {
@@ -88,14 +88,8 @@
 		const drop = e => {
 			e.preventDefault();
 
-			localForage.setItem('ebook', getFile(e), err => {
-				if (err) {
-					console.error(err);
-					alert('fuck');
-				}
-
-				location.reload();
-			});
+			localForage.setItem('ebook', getFile(e))
+				.then(() => { location.reload(); });
 		};
 
 		const keydown = e => {
@@ -109,9 +103,7 @@
 			}
 		};
 
-		const keyup = e => {
-
-		};
+		const keyup = e => { };
 
 		document.addEventListener('keydown', keydown);
 		document.addEventListener('keyup', keyup);
@@ -235,6 +227,11 @@
 		-ms-overflow-style: none;
 	}
 
+	/* add padding to chapters */
+	:global(.epub-view) {
+		padding: 4em 0;
+	}
+
 	/* style links on top of .panel */
 	.important {
 		font-weight: 700;
@@ -242,5 +239,4 @@
 	.important:hover {
 		color: red;
 	}
-
 </style>
