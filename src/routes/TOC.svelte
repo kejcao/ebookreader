@@ -46,7 +46,7 @@
         <div
             on:click={() => {
                 // what the fuck?
-                rendition.clear()
+                // TODO: hack only works on certain ebooks.
                 rendition.display(href);
                 rendition.display(href);
                 dispatch('close');

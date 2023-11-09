@@ -13,12 +13,25 @@
 
 	import Toc from "./TOC.svelte";
 
-	let dragover = false, noBookLoaded = false, showPanel = false;
+	function handleKeypress(e) {
+		switch(e.key) {
+			case 't':
+				showPanel = !showPanel;
+				break;
+			case 'Escape':
+				showPanel = false;
+				break;
+		}
+	}
+
+	let noBookLoaded = false, showPanel = false;
 	let metadata, rendition, book, TOC = [];
 
 	function tryRender() {
 		localForage.getItem('ebook', (err, value) => {
 			if (err) { alert('fuck'); return; }
+
+			// if value is not stored then return
 			if (!value) {
 				noBookLoaded = true;
 				return;
@@ -35,22 +48,41 @@
 					fullsize: true
 				});
 
-			// remember position and store it, so if user refreshes we can load it.
+			// when rendition starts rendering/displaying (ran once)
 			rendition.display()
 				.then(() => {
+					// if we saved a previous page position then load it
 					let loc = localStorage.getItem(book.key());
 					if (loc) { rendition.display(loc) }
 
+					// hook every new page load so we can save its position
 					rendition.on('relocated', loc => {
 						localStorage.setItem(book.key(), loc.start.cfi);
 					});
+					
+					// originally I used mutation observers to make event
+					// listeners work in iframes, before I found that .on
+					// function in epub.js. Might come in handy later.
+
+					// new MutationObserver(l => {
+					// 	for (const mutation of l) {
+					// 		if (mutation.type == 'childList') {
+					// 			for (const node of mutation.addedNodes) {
+					// 				if (node.nodeName.toLowerCase() == 'iframe') {
+					// 					node.contentWindow.addEventListener('keydown', handleKeypress);
+					// 				}
+					// 			}
+					// 		}
+					// 	}
+					// }).observe(
+					// 	document.querySelector('main'),
+					// 	{childList: true, subtree: true})
 				});
 
-			// rendition.hooks.unloaded.register(() => {
-			// 	console.log('tet')
-			// })
+			// to make our keybindings work in iframe pages
+			rendition.on('keydown', handleKeypress)
 
-			// inject our own CSS to make ebooks look nicer.
+			// inject our own CSS to make ebooks look nicer
 			rendition.hooks.content.register(contents => {
 				contents.addStylesheetCss(`
 					@import url('https://fonts.googleapis.com/css2?family=EB+Garamond:ital,wght@0,400;0,700;1,400;1,700&display=swap');
@@ -95,16 +127,7 @@
 </svelte:head>
 
 <svelte:document
-	on:keydown={e => {
-		switch(e.key) {
-			case 't':
-				showPanel = !showPanel;
-				break;
-			case 'Escape':
-				showPanel = false;
-				break;
-		}
-	}}
+	on:keydown={handleKeypress}
 	on:dragenter|preventDefault={e => {
 		e.dataTransfer.dropEffect = 'copy';
 		dropZone.style.visibility = 'visible';
