@@ -25,6 +25,7 @@
 			}
 			noBookLoaded = false;
 
+			// initialize the ebook
 			book = ePub(value);
 			rendition = book.renderTo(
 				document.querySelector('main'),
@@ -33,13 +34,28 @@
 					flow: "scrolled", width: "100%",
 					fullsize: true
 				});
-			let displayed = rendition.display();
 
+			// remember position and store it, so if user refreshes we can load it.
+			rendition.display()
+				.then(() => {
+					let loc = localStorage.getItem(book.key());
+					if (loc) { rendition.display(loc) }
+
+					rendition.on('relocated', loc => {
+						localStorage.setItem(book.key(), loc.start.cfi);
+					});
+				});
+
+			// rendition.hooks.unloaded.register(() => {
+			// 	console.log('tet')
+			// })
+
+			// inject our own CSS to make ebooks look nicer.
 			rendition.hooks.content.register(contents => {
 				contents.addStylesheetCss(`
 					@import url('https://fonts.googleapis.com/css2?family=EB+Garamond:ital,wght@0,400;0,700;1,400;1,700&display=swap');
 					body {
-						font-family: "EB Garamond", serif !important;
+						font-family: "EB Garamond", serif;
 						font-size: 1.2rem !important;
 						text-align: justify;
 						hyphens: auto;
@@ -53,15 +69,7 @@
 				`);
 			});
 
-			displayed.then(() => {
-				let loc = localStorage.getItem(book.key());
-				if (loc) { rendition.display(loc) }
-
-				rendition.on('relocated', loc => {
-					localStorage.setItem(book.key(), loc.start.cfi);
-				});
-			});
-
+			// get these variables since we need them to populate DOM
 			book.loaded.metadata.then(x => { metadata = x; });
 			book.loaded.navigation.then(toc => {
 				toc.forEach((chapter, index) => {
@@ -75,6 +83,7 @@
 	function addFile(file) {
 		localForage.setItem('ebook', file)
 			.then(() => { location.reload(); });
+		if (book) { book.destroy(); }
 	}
 
 	let dropZone;

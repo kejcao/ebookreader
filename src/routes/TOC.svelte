@@ -45,6 +45,9 @@
     {:else}
         <div
             on:click={() => {
+                // what the fuck?
+                rendition.clear()
+                rendition.display(href);
                 rendition.display(href);
                 dispatch('close');
                 return false;
