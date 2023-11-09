@@ -14,7 +14,7 @@
 	import Toc from "./TOC.svelte";
 
 	let dragover = false, noBookLoaded = false, showPanel = false;
-	let metadata, rendition, TOC = [];
+	let metadata, rendition, book, TOC = [];
 
 	function tryRender() {
 		localForage.getItem('ebook', (err, value) => {
@@ -24,7 +24,8 @@
 				return;
 			}
 			noBookLoaded = false;
-			let book = ePub(value);
+
+			book = ePub(value);
 			rendition = book.renderTo(
 				document.querySelector('main'),
 				{
@@ -50,6 +51,15 @@
 				`);
 			});
 
+			displayed.then(() => {
+				let loc = localStorage.getItem(book.key());
+				if (loc) { rendition.display(loc) }
+
+				rendition.on('relocated', loc => {
+					localStorage.setItem(book.key(), loc.start.cfi);
+				});
+			});
+
 			book.loaded.metadata.then(x => { metadata = x; });
 			book.loaded.navigation.then(toc => {
 				toc.forEach((chapter, index) => {
@@ -69,7 +79,7 @@
 </script>
 
 <svelte:head>
-	<title>{metadata?.title ?? "untitled"}</title>
+	<title>{metadata?.title ?? "eBook Reader"}</title>
 	<meta name="description" content={metadata?.description ?? "No description."} />
 </svelte:head>
 
@@ -95,19 +105,15 @@
 	}}
 	on:dragover|preventDefault
 	on:drop|preventDefault={e => {
-		function getFile(event) {
-			let file;
-			if (event.dataTransfer.items) {
-				const x = event.dataTransfer.items[0];
-				if (x.kind === "file") {
-					file = x.getAsFile();
-				}
-			} else {
-				file = event.dataTransfer.files[0];
+		if (e.dataTransfer.items) {
+			const item = e.dataTransfer.items[0];
+			if (item.kind == 'file') {
+				addFile(item.getAsFile());
 			}
-			return file;
+		} else {
+			addFile(e.dataTransfer.files[0]);
 		}
-		addFile(getFile(e));
+		dropZone.style.visibility = 'hidden';
 	}}
 />
 
