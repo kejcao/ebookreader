@@ -58,79 +58,14 @@
 			});
 		})
 	}
+	onMount(tryRender);
 
 	function addFile(file) {
 		localForage.setItem('ebook', file)
 			.then(() => { location.reload(); });
 	}
 
-	onMount(() => {
-		tryRender();
-
-		const dropZone = document.querySelector('#dropZone')
-
-		const show = e => {
-			e.preventDefault();
-			e.dataTransfer.dropEffect = 'copy';
-			dropZone.style.visibility = 'visible';
-		};
-		const hide = e => {
-			if (!e.fromElement) {
-				dropZone.style.visibility = 'hidden';
-			}
-		};
-
-		const dragover = e => {
-			e.preventDefault();
-		};
-		const drop = e => {
-			e.preventDefault();
-
-			function getFile(event) {
-				let file;
-				if (event.dataTransfer.items) {
-					const x = event.dataTransfer.items[0];
-					if (x.kind === "file") {
-						file = x.getAsFile();
-					}
-				} else {
-					file = event.dataTransfer.files[0];
-				}
-				return file;
-			}
-			addFile(getFile(e));
-		};
-
-		const keydown = e => {
-			switch (e.key) {
-				case 't':
-					showPanel = !showPanel;
-					break;
-				case 'Escape':
-					showPanel = false;
-					break;
-			}
-		};
-
-		const keyup = e => { };
-
-		document.addEventListener('keydown', keydown);
-		document.addEventListener('keyup', keyup);
-
-		document.addEventListener('dragenter', show);
-		document.addEventListener('dragover', dragover);
-		document.addEventListener('drop', drop);
-		document.addEventListener('dragleave', hide);
-		return () => {
-			document.removeEventListener('keydown', keydown);
-			document.removeEventListener('keyup', keyup);
-
-			document.removeEventListener('dragenter', show);
-			document.removeEventListener('dragover', dragover);
-			document.removeEventListener('drop', drop);
-			document.removeEventListener('dragleave', hide);
-		}
-	});
+	let dropZone;
 </script>
 
 <svelte:head>
@@ -138,7 +73,45 @@
 	<meta name="description" content={metadata?.description ?? "No description."} />
 </svelte:head>
 
-<div id="dropZone">
+<svelte:document
+	on:keydown={e => {
+		switch(e.key) {
+			case 't':
+				showPanel = !showPanel;
+				break;
+			case 'Escape':
+				showPanel = false;
+				break;
+		}
+	}}
+	on:dragenter|preventDefault={e => {
+		e.dataTransfer.dropEffect = 'copy';
+		dropZone.style.visibility = 'visible';
+	}}
+	on:dragleave|preventDefault={e => {
+		if (!e.fromElement) {
+			dropZone.style.visibility = 'hidden';
+		}
+	}}
+	on:dragover|preventDefault
+	on:drop|preventDefault={e => {
+		function getFile(event) {
+			let file;
+			if (event.dataTransfer.items) {
+				const x = event.dataTransfer.items[0];
+				if (x.kind === "file") {
+					file = x.getAsFile();
+				}
+			} else {
+				file = event.dataTransfer.files[0];
+			}
+			return file;
+		}
+		addFile(getFile(e));
+	}}
+/>
+
+<div bind:this={dropZone} class="dropZone">
 	<div class="msg">
 		<h1>DROP HERE!</h1>
 	</div>
@@ -249,7 +222,7 @@
 		z-index: 999;
 	}
 
-	#dropZone {
+	.dropZone {
 		background: gray;
 		position: fixed;
 		top: 0;
