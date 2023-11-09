@@ -11,51 +11,54 @@
 	const dispatch = createEventDispatcher();
 
     let open = false;
-</script>
 
-<style>
-</style>
+    function hasChildren() {
+        return subitems.length != 0;
+    }
+</script>
 
 <li>
     <!-- {#if subitems.length != 0}
         <a href="#" on:click={() => { open = !open; }}><b>{open ? '↑' : '↓'}</b></a>
     {/if} -->
 
-    {#if subitems.length != 0}
-        <a
+    {#if hasChildren()}
+        <div
             on:click={() => {
                 open = !open;
+                return false;
             }}
-
-            href="#"
-            id="chap-{id}"
         >
-            <i>{label.trim()}</i>
-        </a>
+            <a id="chap-{id}"><i>{label.trim()}</i></a>
+        </div>
+
+        {#if open}
+            <ul>
+                {#each subitems as child}
+                    <svelte:self {...child}
+                        on:close={() => { dispatch('close'); }}
+                        rendition={rendition}
+                    />
+                {/each}
+            </ul>
+        {/if}
     {:else}
-        <a
+        <div
             on:click={() => {
                 rendition.display(href);
                 dispatch('close');
                 return false;
             }}
-
-            href="#"
-            id="chap-{id}"
         >
-            {label.trim()}
-        </a>
-    {/if}
+            <a id="chap-{id}">{label.trim()}</a>
+        </div>
 
-    {#if subitems.length != 0 && open}
-        <ul>
-            {#each subitems as subitem}
-                <svelte:self
-                    {...subitem}
-                    on:close={() => { dispatch('close'); }}
-                    rendition={rendition}
-                />
-            {/each}
-        </ul>
     {/if}
 </li>
+
+<style>
+    div:hover {
+        cursor: pointer;
+        font-weight: 700;
+    }
+</style>

@@ -41,6 +41,8 @@
 					body {
 						font-family: "EB Garamond", serif !important;
 						font-size: 1.2rem !important;
+						text-align: justify;
+						hyphens: auto;
 					}
 					
 					img {
@@ -132,9 +134,7 @@
 				</svg>
 				<input
 					id="upload" type="file"
-					on:change={e => {
-						addFile(e.target.files[0]);
-					}}
+					on:change={e => { addFile(e.target.files[0]); }}
 				/>
 				<h1>DRAG EPUB FILES<br />OR
 					<a
@@ -146,6 +146,7 @@
 						CLICK TO UPLOAD
 					</a>
 				</h1>
+				<h3>try out <a href="#" on:click={e => { addFile('/jane-austen_pride-and-prejudice.epub'); }}>Pride & Prejudice</a></h3>
 			</div>
 		</div>
 	{:else}
@@ -180,6 +181,15 @@
 <style>
 	#upload {
 		display: none;
+	}
+
+	:global(.toc, .toc ul) {
+		list-style: none;
+	}
+
+	.dropZoneStart h1,
+	.dropZoneStart h3 {
+		opacity: .9;
 	}
 
 	.dropZoneStart {
