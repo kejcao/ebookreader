@@ -22,6 +22,11 @@
 				showPanel = false;
 				break;
 		}
+
+		const href = rendition.currentLocation().end.href;
+		for (const x of document.querySelectorAll('.panel div')) {
+			x.style.color = x.getAttribute('href') == href ? 'red' : '';
+		}
 	}
 
 	let noBookLoaded = false, showPanel = false;
@@ -182,31 +187,29 @@
 			</div>
 		</div>
 	{:else}
-		{#if showPanel}
-			<div class="panel">
-				<div>
-					<a
-						href="#"
-						on:click={() => {
-							localForage.clear();
-							location.reload();
-							return false;
-						}}
-					>
-						<span class="important">RESTART</span>
-					</a>
-				</div>
-				<hr />
-				<ul class="toc">
-					{#each TOC as t}
-						<Toc {...t}
-							on:close={() => { showPanel = false; }}
-							rendition={rendition}
-						/>
-					{/each}
-				</ul>
+		<div class="panel" style="visibility:{showPanel ? 'visible' : 'hidden'}">
+			<div>
+				<a
+					href="#"
+					on:click={() => {
+						localForage.clear();
+						location.reload();
+						return false;
+					}}
+				>
+					<span class="important">RESTART</span>
+				</a>
 			</div>
-		{/if}
+			<hr />
+			<ul class="toc">
+				{#each TOC as t}
+					<Toc {...t}
+						on:close={() => { showPanel = false; }}
+						{rendition} active={""}
+					/>
+				{/each}
+			</ul>
+		</div>
 	{/if}
 </main>
 
@@ -328,7 +331,7 @@
 	}
 
 	/* fix epubjs toc jump */
-	:global(:root) {
+	:global(.epub-container *) {
 		overflow-anchor: none !important;
 	}
 </style>
