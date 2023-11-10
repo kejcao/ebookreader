@@ -103,7 +103,7 @@
 		});
 	});
 
-	let dropZone = 'hidden', panel = 'hidden';
+	let panel = 'hidden';
 </script>
 
 <svelte:head>
@@ -119,34 +119,7 @@
 	}}
 />
 
-<svelte:document
-	on:keydown={handleKeypress}
-	on:dragenter|preventDefault={e => {
-		e.dataTransfer.dropEffect = 'copy';
-		dropZone = 'visible';
-	}}
-	on:dragleave|preventDefault={e => {
-		if (!e.fromElement) {
-			dropZone = 'hidden';
-		}
-	}}
-	on:dragover|preventDefault
-	on:drop|preventDefault={e => {
-		if (e.dataTransfer.items) {
-			const item = e.dataTransfer.items[0];
-			if (item.kind == 'file') {
-				addFile(item.getAsFile());
-			}
-		} else {
-			addFile(e.dataTransfer.files[0]);
-		}
-		dropZone = 'hidden';
-	}}
-/>
-
-<div class="dropZone" style:visibility={dropZone}>
-	<div><h1>DROP HERE!</h1></div>
-</div>
+<svelte:document on:keydown={handleKeypress} />
 
 <main>
 	<div class="panel" style:visibility={panel}>
@@ -187,30 +160,6 @@
 		border: 2px solid rgb(37, 37, 37);
 		box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
 		padding: 1em 2em;
-	}
-
-	.dropZone {
-		background: gray;
-		position: fixed;
-		top: 0;
-		left: 0;
-		width: 100%;
-		height: 100%;
-		z-index: 998;
-		opacity: 0.6;
-		visibility: hidden;
-	}
-
-	.dropZone > div {
-		position: fixed;
-		top: 50%;
-		left: 50%;
-		transform: translate(-50%, -50%);
-
-		color: #000;
-		opacity: 1;
-
-		z-index: 999;
 	}
 
 	/* style TOC entries */
