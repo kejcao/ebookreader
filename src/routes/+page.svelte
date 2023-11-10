@@ -1,239 +1,42 @@
 <script>
-// @ts-nocheck
-
-	// TODO: highlight TOC chapter user is currently on
-	// TODO: Fix TOC jump not working.
-	// TODO: Fix book fast scroll.
-	// TODO: verify file input (that there is only one input, that it's epub, etc.).
-	// TODO: make "DROP HERE!" text darker.
-
-	import { onMount } from 'svelte';
 	import localForage from 'localforage';
-	import ePub from 'epubjs';
 
-	import Toc from "./TOC.svelte";
-
-	function handleKeypress(e) {
-		switch(e.key) {
-			case 't':
-				showPanel = !showPanel;
-				break;
-			case 'Escape':
-				showPanel = false;
-				break;
-		}
-
-		const href = rendition.currentLocation().end.href;
-		for (const x of document.querySelectorAll('.panel div')) {
-			x.style.color = x.getAttribute('href') == href ? 'red' : '';
-		}
-	}
-
-	let noBookLoaded = false, showPanel = false;
-	let metadata, rendition, book, TOC = [];
-
-	function tryRender() {
-		localForage.getItem('ebook', (err, value) => {
-			if (err) { alert('fuck'); return; }
-
-			// if value is not stored then return
-			if (!value) {
-				noBookLoaded = true;
-				return;
-			}
-			noBookLoaded = false;
-
-			// initialize the ebook
-			book = ePub(value);
-			rendition = book.renderTo(
-				document.querySelector('main'),
-				{
-					manager: "continuous",
-					flow: "scrolled", width: "100%",
-					fullsize: true
-				});
-
-			// when rendition starts rendering/displaying (ran once)
-			rendition.display()
-				.then(() => {
-					// if we saved a previous page position then load it
-					let loc = localStorage.getItem(book.key());
-					if (loc) { rendition.display(loc) }
-
-					// hook every new page load so we can save its position
-					rendition.on('relocated', loc => {
-						localStorage.setItem(book.key(), loc.start.cfi);
-					});
-					
-					// originally I used mutation observers to make event
-					// listeners work in iframes, before I found that .on
-					// function in epub.js. Might come in handy later.
-
-					// new MutationObserver(l => {
-					// 	for (const mutation of l) {
-					// 		if (mutation.type == 'childList') {
-					// 			for (const node of mutation.addedNodes) {
-					// 				if (node.nodeName.toLowerCase() == 'iframe') {
-					// 					node.contentWindow.addEventListener('keydown', handleKeypress);
-					// 				}
-					// 			}
-					// 		}
-					// 	}
-					// }).observe(
-					// 	document.querySelector('main'),
-					// 	{childList: true, subtree: true})
-				});
-
-			// to make our keybindings work in iframe pages
-			rendition.on('keydown', handleKeypress)
-
-			// inject our own CSS to make ebooks look nicer
-			rendition.hooks.content.register(contents => {
-				contents.addStylesheetCss(`
-					@import url('https://fonts.googleapis.com/css2?family=EB+Garamond:ital,wght@0,400;0,700;1,400;1,700&display=swap');
-					body {
-						font-family: "EB Garamond", serif;
-						font-size: 1.2rem !important;
-						text-align: justify;
-						hyphens: auto;
-					}
-					
-					img {
-						width: 100% !important;
-						height: auto !important;
-						object-fit: contain !important;
-					}
-				`);
-			});
-
-			// get these variables since we need them to populate DOM
-			book.loaded.metadata.then(x => { metadata = x; });
-			book.loaded.navigation.then(toc => {
-				toc.forEach((chapter, index) => {
-					TOC.push(chapter);
-				});
-			});
-		})
-	}
-	onMount(tryRender);
-
-	function addFile(file) {
+	function readFile(file) {
 		localForage.setItem('ebook', file)
-			.then(() => { location.reload(); });
-		if (book) { book.destroy(); }
+			.then(() => { location.assign('/reader'); });
 	}
 
-	let dropZone;
+	let input;
 </script>
 
-<svelte:head>
-	<title>{metadata?.title ?? "eBook Reader"}</title>
-	<meta name="description" content={metadata?.description ?? "No description."} />
-</svelte:head>
-
-<svelte:document
-	on:keydown={handleKeypress}
-	on:dragenter|preventDefault={e => {
-		e.dataTransfer.dropEffect = 'copy';
-		dropZone.style.visibility = 'visible';
-	}}
-	on:dragleave|preventDefault={e => {
-		if (!e.fromElement) {
-			dropZone.style.visibility = 'hidden';
-		}
-	}}
-	on:dragover|preventDefault
-	on:drop|preventDefault={e => {
-		if (e.dataTransfer.items) {
-			const item = e.dataTransfer.items[0];
-			if (item.kind == 'file') {
-				addFile(item.getAsFile());
-			}
-		} else {
-			addFile(e.dataTransfer.files[0]);
-		}
-		dropZone.style.visibility = 'hidden';
-	}}
-/>
-
-<div bind:this={dropZone} class="dropZone">
-	<div class="msg">
-		<h1>DROP HERE!</h1>
-	</div>
+<div class="dropZone">
+    <div>
+        <svg width="16em" height="16em" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M12 16V22M12 16L14 18M12 16L10 18" stroke="#1C274C" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+            <path d="M22 13.3529C22 15.6958 20.5562 17.7055 18.5 18.5604M14.381 8.02721C14.9767 7.81911 15.6178 7.70588 16.2857 7.70588C16.9404 7.70588 17.5693 7.81468 18.1551 8.01498M7.11616 10.6089C6.8475 10.5567 6.56983 10.5294 6.28571 10.5294C3.91878 10.5294 2 12.4256 2 14.7647C2 16.6611 3.26124 18.2664 5 18.8061M7.11616 10.6089C6.88706 9.9978 6.7619 9.33687 6.7619 8.64706C6.7619 5.52827 9.32028 3 12.4762 3C15.4159 3 17.8371 5.19371 18.1551 8.01498M7.11616 10.6089C7.68059 10.7184 8.20528 10.9374 8.66667 11.2426M18.1551 8.01498C19.0446 8.31916 19.8345 8.83436 20.4633 9.5" stroke="#1C274C" stroke-width="1.5" stroke-linecap="round"/>
+        </svg>
+        <h1>DRAG EPUB FILES<br />
+			OR <input
+				bind:this={input} style="display:none" type="file"
+				on:change={e => { readFile(e.target.files[0]); }}
+			/>
+            <a href="#" on:click|preventDefault={() => input.click()}>CLICK TO UPLOAD</a>
+        </h1>
+        <h3>try out <a href="#" on:click|preventDefault={() => readFile('/jane-austen_pride-and-prejudice.epub')}>Pride & Prejudice</a></h3>
+    </div>
 </div>
-<main>
-	{#if noBookLoaded}
-		<div class="dropZoneStart">
-			<div>
-				<svg width="16em" height="16em" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-					<path d="M12 16V22M12 16L14 18M12 16L10 18" stroke="#1C274C" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
-					<path d="M22 13.3529C22 15.6958 20.5562 17.7055 18.5 18.5604M14.381 8.02721C14.9767 7.81911 15.6178 7.70588 16.2857 7.70588C16.9404 7.70588 17.5693 7.81468 18.1551 8.01498M7.11616 10.6089C6.8475 10.5567 6.56983 10.5294 6.28571 10.5294C3.91878 10.5294 2 12.4256 2 14.7647C2 16.6611 3.26124 18.2664 5 18.8061M7.11616 10.6089C6.88706 9.9978 6.7619 9.33687 6.7619 8.64706C6.7619 5.52827 9.32028 3 12.4762 3C15.4159 3 17.8371 5.19371 18.1551 8.01498M7.11616 10.6089C7.68059 10.7184 8.20528 10.9374 8.66667 11.2426M18.1551 8.01498C19.0446 8.31916 19.8345 8.83436 20.4633 9.5" stroke="#1C274C" stroke-width="1.5" stroke-linecap="round"/>
-				</svg>
-				<input
-					id="upload" type="file"
-					on:change={e => { addFile(e.target.files[0]); }}
-				/>
-				<h1>DRAG EPUB FILES<br />OR
-					<a
-						on:click|preventDefault={() => {
-							document.querySelector('#upload').click();
-						}}
-						href="#"
-					>
-						CLICK TO UPLOAD
-					</a>
-				</h1>
-				<h3>try out <a href="#" on:click={e => { addFile('/jane-austen_pride-and-prejudice.epub'); }}>Pride & Prejudice</a></h3>
-			</div>
-		</div>
-	{:else}
-		<div class="panel" style="visibility:{showPanel ? 'visible' : 'hidden'}">
-			<div>
-				<a
-					href="#"
-					on:click={() => {
-						localForage.clear();
-						location.reload();
-						return false;
-					}}
-				>
-					<span class="important">RESTART</span>
-				</a>
-			</div>
-			<hr />
-			<ul class="toc">
-				{#each TOC as t}
-					<Toc {...t}
-						on:close={() => { showPanel = false; }}
-						{rendition} active={""}
-					/>
-				{/each}
-			</ul>
-		</div>
-	{/if}
-</main>
 
 <style>
-	#upload {
-		display: none;
-	}
-
-	:global(.toc, .toc ul) {
-		list-style: none;
-	}
-
-	.dropZoneStart h1,
-	.dropZoneStart h3 {
+	.dropZone h1,
+	.dropZone h3 {
 		opacity: .9;
 	}
 
-	.dropZoneStart {
+	.dropZone {
 		display: flex;
 		align-items: center;
 		justify-content: center;
 		text-align: center;
-
-		opacity: .8;
 
 		position: fixed;
 		width: 38em;
@@ -241,97 +44,7 @@
 		top: 50%;
 		left: 50%;
 		transform: translate(-50%, -50%);
-	}
 
-	.panel {
-		position: fixed;
-		width: 38em;
-		height: 60%;
-		top: 50%;
-		left: 50%;
-		transform: translate(-50%, -50%);
-
-		z-index: 2;
-		overflow-y: scroll;
-
-		background: white;
-		border: 3px solid rgb(48, 48, 48);
-		border-radius: 12px;
-		box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
-		padding: 1em 2em;
-	}
-
-	.msg {
-		position: fixed;
-		top: 50%;
-		left: 50%;
-		transform: translate(-50%, -50%);
-
-		color: #000;
-		opacity: 1;
-
-		z-index: 999;
-	}
-
-	.dropZone {
-		background: gray;
-		position: fixed;
-		top: 0;
-		left: 0;
-		width: 100%;
-		height: 100%;
-		z-index: 998;
-		opacity: 0.6;
-		visibility: hidden;
-	}
-
-	/* style TOC entries */
-	:global(.panel a) {
-		text-decoration: none;
-		color: inherit;
-		font-family: monospace;
-	}
-	:global(.panel a:hover) {
-		font-weight: 700;
-	}
-
-	.toc ul {
-		list-style: none;
-		padding: 0;
-	}
-
-	/* hide scroll bars */
-	.panel::-webkit-scrollbar {
-		display: none;
-	}
-	.panel {
-		scrollbar-width: none;
-		-ms-overflow-style: none;
-	}
-
-	:global(body::-webkit-scrollbar) {
-		display: none;
-	}
-	:global(body) {
-		scrollbar-width: none;
-		-ms-overflow-style: none;
-	}
-
-	/* add padding to chapters */
-	:global(.epub-view) {
-		padding: 4em 0;
-	}
-
-	/* style links on top of .panel */
-	.important {
-		font-weight: 700;
-	}
-	.important:hover {
-		color: red;
-	}
-
-	/* fix epubjs toc jump */
-	:global(.epub-container *) {
-		overflow-anchor: none !important;
+		opacity: .8;
 	}
 </style>
