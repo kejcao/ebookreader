@@ -45,9 +45,6 @@
     {:else}
         <div
             on:click={() => {
-                // what the fuck?
-                // TODO: hack only works on certain ebooks.
-                rendition.display(href);
                 rendition.display(href);
                 dispatch('close');
                 return false;

@@ -326,4 +326,9 @@
 	.important:hover {
 		color: red;
 	}
+
+	/* fix epubjs toc jump */
+	:global(:root) {
+		overflow-anchor: none !important;
+	}
 </style>
