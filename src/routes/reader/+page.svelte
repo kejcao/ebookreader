@@ -88,6 +88,8 @@
 							// this is a hack to make it work
 							rendition._display(loc)
 						})
+				} else {
+					rendition.display()
 				}
 
 				// save the metadata (for title and desc)
