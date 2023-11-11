@@ -72,7 +72,7 @@
 					}
 					
 					img {
-						width: 100% !important;
+						max-width: 100% !important;
 						height: auto !important;
 						object-fit: contain !important;
 					}
