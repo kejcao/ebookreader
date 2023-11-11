@@ -55,6 +55,16 @@
 					fullsize: true
 				});
 
+			// code to get and update percentage
+			book.ready
+				.then(() => {
+					book.locations.generate(1000);
+				})
+			rendition.on('relocated', loc => {
+				// a little finicky
+				percentage = Math.ceil(book.locations.percentageFromCfi(loc.start.cfi) * 100);
+			});
+
 			// to make our keybinds work in iframe pages
 			rendition.on('keydown', handleKeypress)
 
@@ -106,6 +116,7 @@
 	});
 
 	let panel = 'hidden';
+	let percentage = 0;
 </script>
 
 <svelte:head>
@@ -144,9 +155,19 @@
 			{/each}
 		</ul>
 	</div>
+	<div class="percentage">{percentage}%</div>
 </main>
 
 <style>
+	.percentage {
+		position: fixed;
+		top: 100%;
+		left: 100%;
+		transform: translate(-100%, -100%);
+
+		font-family: monospace;
+	}
+
 	.panel {
 		position: fixed;
 		width: 38em;
