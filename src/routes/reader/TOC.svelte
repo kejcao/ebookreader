@@ -52,6 +52,11 @@
 </li>
 
 <style>
+    li {
+        padding: .2em 0;
+        line-height: .9em;
+    }
+
     div:hover {
         cursor: pointer;
         font-weight: 700;
