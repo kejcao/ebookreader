@@ -41,7 +41,6 @@
         <div {href}
             on:click={() => {
                 rendition.display(href);
-                rendition.display(href);
                 dispatch('close');
                 return false;
             }}
