@@ -24,14 +24,12 @@
 				break;
 		}
 
-		let href;
-		if (rendition.currentLocation == undefined) {
-			href = null;
-		} else {
+		try {
 			href = rendition.currentLocation().end.href;
-		}
-		for (const x of document.querySelectorAll('.panel div')) {
-			x.style.color = x.getAttribute('href') == href ? 'red' : '';
+			for (const x of document.querySelectorAll('.panel div')) {
+				x.style.color = x.getAttribute('href') == href ? 'red' : '';
+			}
+		} catch(_) {
 		}
 	}
 
@@ -57,13 +55,35 @@
 
 			// code to get and update percentage
 			book.ready
-				.then(() => {
-					book.locations.generate(1000);
-				})
-			rendition.on('relocated', loc => {
-				// a little finicky
-				percentage = Math.ceil(book.locations.percentageFromCfi(loc.start.cfi) * 100);
-			});
+				.then(async () => {
+					// we're basically imitating the book.locations.generate() function
+					const locs = book.locations;
+
+					let sections = [];
+					locs.spine.each(section => sections.push(section));
+					locs.break = 1024;
+					await Promise.all(
+						sections
+						.filter(x => x.linear)
+						.map(async section => {
+							const contents = await section.load(locs.request);
+							locs._locations = locs._locations
+								.concat(locs.parse(contents, section.cfiBase));
+							section.unload();
+						})
+					);
+
+					locs.total = locs._locations.length - 1;
+					if (locs._currentCfi) {
+						locs.currentLocation = locs._currentCfi;
+					}
+
+					rendition.on('relocated', loc => {
+						const {page, total} = loc.end.displayed;
+						chapterProgress = (page - 1) + '/' + total;
+						progress = Math.ceil(loc.start.percentage * 100);
+					});
+				});
 
 			// to make our keybinds work in iframe pages
 			rendition.on('keydown', handleKeypress)
@@ -116,7 +136,7 @@
 	});
 
 	let panel = 'hidden';
-	let percentage = 0;
+	let progress = 'N/A', chapterProgress = 'N/A';
 </script>
 
 <svelte:head>
@@ -155,15 +175,25 @@
 			{/each}
 		</ul>
 	</div>
-	<div class="percentage">{percentage}%</div>
+	<div class="progress">{progress}%</div>
+	<div class="chapter-progress">{chapterProgress}</div>
 </main>
 
 <style>
-	.percentage {
+	.progress {
 		position: fixed;
 		top: 100%;
 		left: 100%;
 		transform: translate(-100%, -100%);
+
+		font-family: monospace;
+	}
+	
+	.chapter-progress {
+		position: fixed;
+		top: 100%;
+		left: 0%;
+		transform: translate(0%, -100%);
 
 		font-family: monospace;
 	}
