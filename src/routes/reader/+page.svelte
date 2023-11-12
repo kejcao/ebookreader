@@ -25,7 +25,7 @@
 		}
 
 		try {
-			href = rendition.currentLocation().end.href;
+			let href = rendition.currentLocation().end.href;
 			for (const x of document.querySelectorAll('.panel div')) {
 				x.style.color = x.getAttribute('href') == href ? 'red' : '';
 			}
@@ -137,6 +137,10 @@
 
 	let panel = 'hidden';
 	let progress = 'N/A', chapterProgress = 'N/A';
+
+	// don't allow scroll if panel is open
+	$: document.querySelector('body').style.overflowY =
+		panel == 'hidden' ? 'auto' : 'hidden';
 </script>
 
 <svelte:head>
@@ -155,6 +159,11 @@
 <svelte:document on:keydown={handleKeypress} />
 
 <main>
+	<div
+		class="panel-background"
+		style:visibility={panel}
+		on:click={() => panel = 'hidden'}
+	></div>
 	<div class="panel" style:visibility={panel}>
 		<div>
 			<a
@@ -180,6 +189,16 @@
 </main>
 
 <style>
+	.panel-background {
+		position: fixed;
+		top: 0%;
+		left: 0%;
+		width: 100%;
+		height: 100%;
+		background-color: rgba(0,0,0, 0);
+		z-index: 1;
+	}
+
 	.progress {
 		position: fixed;
 		top: 100%;
