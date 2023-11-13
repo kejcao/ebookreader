@@ -34,6 +34,10 @@
 	}
 
 	onMount(() => {
+		// don't allow scroll if panel is open
+		$: document.querySelector('body').style.overflowY =
+			panel == 'hidden' ? 'auto' : 'hidden';
+
 		localForage.getItem('ebook', (err, value) => {
 			if (err) {
 				alert('something went wrong');
@@ -56,22 +60,17 @@
 			// code to get and update percentage
 			book.ready
 				.then(async () => {
-					// we're basically imitating the book.locations.generate() function
+					// we're imitating the book.locations.generate() function
+
 					const locs = book.locations;
 
-					let sections = [];
-					locs.spine.each(section => sections.push(section));
 					locs.break = 1024;
-					await Promise.all(
-						sections
-						.filter(x => x.linear)
-						.map(async section => {
-							const contents = await section.load(locs.request);
-							locs._locations = locs._locations
-								.concat(locs.parse(contents, section.cfiBase));
-							section.unload();
-						})
-					);
+
+					let xs = [];
+					locs.spine.each(x => xs.push(x));
+					for (const section of xs) {
+						await (locs.process.bind(locs))(section);
+					}
 
 					locs.total = locs._locations.length - 1;
 					if (locs._currentCfi) {
@@ -137,10 +136,6 @@
 
 	let panel = 'hidden';
 	let progress = 'N/A', chapterProgress = 'N/A';
-
-	// don't allow scroll if panel is open
-	$: document.querySelector('body').style.overflowY =
-		panel == 'hidden' ? 'auto' : 'hidden';
 </script>
 
 <svelte:head>
