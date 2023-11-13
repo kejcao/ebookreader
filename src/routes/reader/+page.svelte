@@ -77,11 +77,13 @@
 						locs.currentLocation = locs._currentCfi;
 					}
 
-					rendition.on('relocated', loc => {
+					function updateProgress(loc) {
 						const {page, total} = loc.end.displayed;
 						chapterProgress = (page - 1) + '/' + total;
 						progress = Math.ceil(loc.start.percentage * 100);
-					});
+					}
+					updateProgress(rendition.currentLocation());
+					rendition.on('relocated', updateProgress);
 				});
 
 			// to make our keybinds work in iframe pages
