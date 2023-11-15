@@ -34,10 +34,6 @@
 	}
 
 	onMount(() => {
-		// don't allow scroll if panel is open
-		$: document.querySelector('body').style.overflowY =
-			panel == 'hidden' ? 'auto' : 'hidden';
-
 		localForage.getItem('ebook', (err, value) => {
 			if (err) {
 				alert('something went wrong');
@@ -56,6 +52,12 @@
 					flow: "scrolled", width: "100%",
 					fullsize: true
 				});
+
+			function updateProgress(loc) {
+				const {page, total} = loc.end.displayed;
+				chapterProgress = (page - 1) + '/' + total;
+				progress = Math.ceil(loc.start.percentage * 100);
+			}
 
 			// code to get and update percentage
 			book.ready
@@ -77,12 +79,6 @@
 						locs.currentLocation = locs._currentCfi;
 					}
 
-					function updateProgress(loc) {
-						const {page, total} = loc.end.displayed;
-						chapterProgress = (page - 1) + '/' + total;
-						progress = Math.ceil(loc.start.percentage * 100);
-					}
-					updateProgress(rendition.currentLocation());
 					rendition.on('relocated', updateProgress);
 				});
 
@@ -115,12 +111,14 @@
 				let loc = localStorage.getItem(book.key());
 				if (loc) {
 					rendition.display(loc)
-						.then(_ => {
+						.then(() => {
 							// this is a hack to make it work
 							rendition._display(loc)
+							updateProgress(rendition.currentLocation())
 						})
 				} else {
 					rendition.display()
+						.then(() => updateProgress(rendition.currentLocation()))
 				}
 
 				// save the metadata (for title and desc)
@@ -138,6 +136,11 @@
 
 	let panel = 'hidden';
 	let progress = 'N/A', chapterProgress = 'N/A';
+
+    $: if (typeof document !== 'undefined') {
+		document.body.style.overflow =
+			panel == 'hidden' ? 'auto' : 'hidden';
+	}
 </script>
 
 <svelte:head>
