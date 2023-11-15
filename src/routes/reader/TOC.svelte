@@ -5,6 +5,7 @@
 	export let parent = '';
 	export let subitems = [];
     export let rendition;
+    export let active;
     export let depth = 0;
 
 	import { createEventDispatcher } from 'svelte';
@@ -32,17 +33,20 @@
         {#if open}
             <ul>
                 {#each subitems as child}
-                    <svelte:self {...child} {rendition} depth={depth+1.5}
-                        on:close={() => { dispatch('close'); }} />
+                    <svelte:self
+                        {...child} {rendition} {active}
+                        depth={depth + 1.5}
+                        on:close={() => dispatch('close')}
+                    />
                 {/each}
             </ul>
         {/if}
     {:else}
         <div {href}
-            on:click={() => {
+            class={active == href ? 'active' : ''}
+            on:click|preventDefault={() => {
                 rendition.display(href);
                 dispatch('close');
-                return false;
             }}
         >
             <a id="chap-{id}">{label.trim()}</a>
@@ -51,13 +55,20 @@
 </li>
 
 <style>
-    li {
+    div {
         padding: .2em 0;
         line-height: .9em;
+        user-select: none;
+    }
+
+    .active {
+        text-decoration: underline;
+        color: black;
     }
 
     div:hover {
         cursor: pointer;
         font-weight: 700;
+        background-color: rgba(228, 228, 228, .4);
     }
 </style>

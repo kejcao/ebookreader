@@ -23,15 +23,20 @@
 				panel = 'hidden';
 				break;
 		}
-
-		try {
-			let href = rendition.currentLocation().end.href;
-			for (const x of document.querySelectorAll('.panel div')) {
-				x.style.color = x.getAttribute('href') == href ? 'red' : '';
-			}
-		} catch(_) {
-		}
 	}
+
+	// function updateCurrentChapterHighlight() {
+	// 	try {
+	// 		let href = rendition.currentLocation().end.href;
+	// 		for (const x of document.querySelectorAll('.panel div')) {
+	// 			x.style.color = x.getAttribute('href') == href ? 'red' : '';
+	// 		}
+	// 	} catch(_) { }
+	// }
+
+	// $: panel, updateCurrentChapterHighlight();
+
+	let active;
 
 	onMount(() => {
 		localForage.getItem('ebook', (err, value) => {
@@ -57,6 +62,7 @@
 				const {page, total} = loc.end.displayed;
 				chapterProgress = (page - 1) + '/' + total;
 				progress = Math.ceil(loc.start.percentage * 100);
+				active = loc.end.href;
 			}
 
 			// code to get and update percentage
@@ -180,7 +186,8 @@
 		<hr />
 		<ul class="toc">
 			{#each TOC as t}
-				<Toc {...t} {rendition} on:close={() => panel = 'hidden'} />
+				<Toc {...t} {rendition} {active}
+					on:close={() => panel = 'hidden'} />
 			{/each}
 		</ul>
 	</div>
