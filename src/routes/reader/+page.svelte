@@ -7,38 +7,46 @@
 
 	import Toc from "./TOC.svelte";
 
-	let metadata, rendition, book, TOC = [];
-
 	function addFile(file) {
 		localForage.setItem('ebook', file)
 			.then(() => { location.reload(); });
 	}
 
 	function handleKeypress(e) {
-		switch(e.key) {
+		switch (e.key) {
 			case 't':
+			case 'Tab':
 				panel = panel == 'visible' ? 'hidden' : 'visible';
+				e.preventDefault();
 				break;
 			case 'Escape':
 				panel = 'hidden';
 				break;
+			case 'm':
+				mode = mode == 'swipe' ? 'scroll' : 'swipe';
+				location.reload();
+				break;
+		}
+
+		if (mode == 'swipe') {
+			switch (e.key) {
+				case 'ArrowRight':
+				case 'l': case 'j':
+					rendition.next()
+					break;
+				case 'ArrowLeft':
+				case 'h': case 'k':
+					rendition.prev()
+					break;
+			}
 		}
 	}
 
-	// function updateCurrentChapterHighlight() {
-	// 	try {
-	// 		let href = rendition.currentLocation().end.href;
-	// 		for (const x of document.querySelectorAll('.panel div')) {
-	// 			x.style.color = x.getAttribute('href') == href ? 'red' : '';
-	// 		}
-	// 	} catch(_) { }
-	// }
-
-	// $: panel, updateCurrentChapterHighlight();
-
-	let active;
+	let mode, metadata, rendition, book, currentChapter, tocData = [];
 
 	onMount(() => {
+		mode = localStorage.getItem('mode') ?? 'swipe';
+
 		localForage.getItem('ebook', (err, value) => {
 			if (err) {
 				alert('something went wrong');
@@ -52,17 +60,23 @@
 			book = ePub(value);
 			rendition = book.renderTo(
 				document.querySelector('main'),
-				{
-					manager: "continuous",
-					flow: "scrolled", width: "100%",
-					fullsize: true
-				});
+				mode == 'swipe'
+					? {
+						manager: "continuous",
+						flow: "paginated",
+						width: "100%", height: "100%"
+					}
+					: {
+						manager: "continuous",
+						flow: "scrolled", width: "100%",
+						fullsize: true
+					});
 
 			function updateProgress(loc) {
 				const {page, total} = loc.end.displayed;
 				chapterProgress = (page - 1) + '/' + total;
 				progress = Math.ceil(loc.start.percentage * 100);
-				active = loc.end.href;
+				currentChapter = loc.end.href;
 			}
 
 			// code to get and update percentage
@@ -99,9 +113,12 @@
 						font-family: "EB Garamond", serif;
 						font-size: 1.2rem !important;
 						text-align: justify;
+						${ // we only need this CSS if in scroll mode
+							mode == 'scroll'
+								? 'padding: 10em 0 !important;'
+								: ''
+						}
 						hyphens: auto;
-						padding-top: 10em !important;
-						padding-bottom: 10em !important;
 					}
 					
 					img {
@@ -132,20 +149,23 @@
 			});
 
 			// save the table of contents
-			book.loaded.navigation.then(toc => {
-				toc.forEach((chapter, index) => {
-					TOC.push(chapter);
-				});
-			});
+			book.loaded.navigation.then(toc => tocData = toc.toc);
 		});
 	});
 
 	let panel = 'hidden';
 	let progress = 'N/A', chapterProgress = 'N/A';
 
+	// if panel is displayed, then lock the scroll of body element.
     $: if (typeof document !== 'undefined') {
 		document.body.style.overflow =
 			panel == 'hidden' ? 'auto' : 'hidden';
+	}
+
+	$: switch(mode) {
+		case 'swipe':
+			document.querySelector('html').style = `height:${mode == 'swipe' ? '100%' : 'auto'}`;
+			break;
 	}
 </script>
 
@@ -154,46 +174,47 @@
 	<meta name="description" content={metadata?.description ?? "No description."} />
 </svelte:head>
 
+<!-- TODO make swipe work only if mode is scroll -->
 <svelte:window
 	on:beforeunload={_ => {
-		// save reader position before exiting
+		// save reader configuration before exiting
 		localStorage.setItem(book.key(), rendition.currentLocation().start.cfi);
-		return null;
+		localStorage.setItem('mode', mode);
 	}}
+	on:swiperight={() => rendition.next()}
+	on:swipeleft={() => rendition.prev()}
 />
-
 <svelte:document on:keydown={handleKeypress} />
 
-<main>
-	<div
-		class="panel-background"
-		style:visibility={panel}
-		on:click={() => panel = 'hidden'}
-	></div>
-	<div class="panel" style:visibility={panel}>
-		<div>
-			<a
-				href="#"
-				on:click={() => {
-					localForage.clear();
-					location.assign('/');
-					return false;
-				}}
-			>
-				RESTART
-			</a>
-		</div>
-		<hr />
-		<ul class="toc">
-			{#each TOC as t}
-				<Toc {...t} {rendition} {active}
-					on:close={() => panel = 'hidden'} />
-			{/each}
-		</ul>
+<div
+	class="panel-background"
+	style:visibility={panel}
+	on:click={() => panel = 'hidden'}
+></div>
+<div class="panel" style:visibility={panel}>
+	<div>
+		<a
+			href="#"
+			on:click={() => {
+				localForage.clear();
+				location.assign('/');
+				return false;
+			}}
+		>
+			RESTART
+		</a>
 	</div>
-	<div class="progress">{progress}%</div>
-	<div class="chapter-progress">{chapterProgress}</div>
-</main>
+	<hr />
+	<ul class="toc">
+		{#each tocData as t}
+			<Toc {...t} {rendition} active={currentChapter}
+				on:close={() => panel = 'hidden'} />
+		{/each}
+	</ul>
+</div>
+<div class="progress">{progress}%</div>
+<div class="chapter-progress">{chapterProgress}</div>
+<main class="{mode == 'swipe' ? 'swipe' : ''}"></main>
 
 <style>
 	.panel-background {
@@ -268,5 +289,14 @@
 	/* fix epubjs toc jump */
 	:global(.epub-container *) {
 		overflow-anchor: none !important;
+	}
+
+	main {
+		width: min(90vw, 32rem) !important;
+	}
+
+	.swipe {
+		height: min(90vh, 48rem) !important;
+		box-shadow: 0 0 4px #ccc;
 	}
 </style>
