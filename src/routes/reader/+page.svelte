@@ -32,6 +32,7 @@
 			switch (e.key) {
 				case 'ArrowRight':
 				case 'l': case 'j':
+				case ' ':
 					rendition.next()
 					break;
 				case 'ArrowLeft':
@@ -170,7 +171,7 @@
 </script>
 
 <svelte:head>
-	<title>{metadata?.title ?? "eBook Reader"}</title>
+	<title>{metadata?.title ?? 'Untitled'} - eBook Reader</title>
 	<meta name="description" content={metadata?.description ?? "No description."} />
 </svelte:head>
 
@@ -292,11 +293,13 @@
 	}
 
 	main {
-		width: min(90vw, 32rem) !important;
+		width: min(90vw, 32em) !important;
 	}
 
 	.swipe {
-		height: min(90vh, 48rem) !important;
+		width: min(90vw, 35em) !important;
+		height: min(90vh, 56em) !important;
+		padding: 2em;
 		box-shadow: 0 0 4px #ccc;
 	}
 </style>
