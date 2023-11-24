@@ -109,19 +109,24 @@
 			// inject our own CSS to make ebooks look nicer
 			rendition.hooks.content.register(contents => {
 				contents.addStylesheetCss(`
-					@import url('https://fonts.googleapis.com/css2?family=EB+Garamond:ital,wght@0,400;0,700;1,400;1,700&display=swap');
+					p {
+						text-align: justify !important;
+						hyphens: auto !important;
+					}
+
+					html {
+						font-size: 1.1rem !important;
+					}
+
 					body {
 						font-family: "EB Garamond", serif;
-						font-size: 1.2rem !important;
-						text-align: justify;
-						${ // we only need this CSS if in scroll mode
+						${
 							mode == 'scroll'
 								? 'padding: 10em 0 !important;'
 								: ''
 						}
-						hyphens: auto;
 					}
-					
+
 					img {
 						max-width: 100% !important;
 						height: auto !important;
@@ -173,6 +178,9 @@
 <svelte:head>
 	<title>{metadata?.title ?? 'Untitled'} - eBook Reader</title>
 	<meta name="description" content={metadata?.description ?? "No description."} />
+	<link rel="preconnect" href="https://fonts.googleapis.com">
+	<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+	<link href="https://fonts.googleapis.com/css2?family=EB+Garamond:ital,wght@0,400;0,700;1,400;1,700&display=swap" rel="stylesheet">
 </svelte:head>
 
 <!-- TODO make swipe work only if mode is scroll -->
