@@ -6,6 +6,8 @@
 	import Search from "./Search.svelte";
 	import { readBook, getBooks } from "./util.js";
 
+	let loading = true;
+
 	function handleKeypress(e) {
 		switch (e.key) {
 			case 'Tab':
@@ -38,10 +40,11 @@
 
 		if (mode == 'swipe') {
 			switch (e.key) {
-				case 'ArrowRight': rendition.next(); break;
-				case  'ArrowLeft': rendition.prev(); break;
+				case 'ArrowRight': case 'PageDown':
+					rendition.next(); break;
+				case  'ArrowLeft': case   'PageUp':
+					rendition.prev(); break;
 			}
-
 			if (e.key == ' ') {
 				e.shiftKey
 					? rendition.prev()
@@ -53,67 +56,10 @@
 	let mode, rendition, currentChapter;
 	let search = { 'query': '', 'results': [] };
 
-	let book, metadata, tocData = [];
-	function loadBook(b) {
-		metadata = b.metadata;
-		tocData = b.toc;
-		book = ePub(b.file);
-
-		rendition = book.renderTo(
-			document.querySelector('main'),
-			mode == 'swipe'
-				? {
-					manager: "continuous",
-					flow: "paginated",
-					width: "100%", height: "100%"
-				}
-				: {
-					manager: "continuous",
-					flow: "scrolled", width: "100%",
-					fullsize: true
-				});
-
-		function updateProgress(loc) {
-			const {page, total} = loc.end.displayed;
-			chapterProgress = (page - 1) + '/' + total;
-			progress = Math.ceil(loc.start.percentage * 100);
-			currentChapter = loc.end.href;
-		}
-
-		book.loaded.navigation.then(t => {tocData = t.toc;console.log('fuck')});
-
-		// get and update percentage
-		book.ready
-			.then(async () => {
-				// we're imitating the book.locations.generate() function
-
-				const locs = book.locations;
-
-				locs.break = 1024;
-
-				let xs = [];
-				locs.spine.each(x => xs.push(x));
-				for (const section of xs) {
-					await (locs.process.bind(locs))(section);
-				}
-
-				locs.total = locs._locations.length - 1;
-				if (locs._currentCfi) {
-					locs.currentLocation = locs._currentCfi;
-				}
-
-				rendition.on('relocated', updateProgress);
-			});
-
-		// to make our keybinds work in iframe pages
-		rendition.on('rendered', (rendition, iframe) => {
-			iframe.document.addEventListener(
-				'keydown', handleKeypress, { passive: false });
-		});
-
-		// inject our own CSS to make ebooks look nicer
-		rendition.hooks.content.register(contents => {
-			contents.addStylesheetCss(`
+	function injectCSS() {
+		rendition.book.spine.hooks.content.register(doc => {
+			const style = doc.createElement('style');
+			style.innerHTML = `
 				@import url('https://fonts.cdnfonts.com/css/dejavu-serif');
 
 				p {
@@ -139,34 +85,64 @@
 					height: auto !important;
 					object-fit: contain !important;
 				}
-			`);
-		});
-
-		book.loaded.metadata.then(x => {
-			// try to load the saved reader position
-			let loc = localStorage.getItem(book.key());
-			if (loc) {
-				rendition.display(loc)
-					.then(() => {
-						// this is a hack to make it work
-						rendition._display(loc)
-						updateProgress(rendition.currentLocation())
-					})
-			} else {
-				rendition.display()
-					.then(() => updateProgress(rendition.currentLocation()))
-			}
+			`;
+			doc.querySelector('head').appendChild(style);
 		});
 	}
 
+	// to make our event listeners work in the iframes
+	function hookIframes() {
+		rendition.on('rendered', (_, iframe) => {
+			iframe.document.addEventListener(
+				'keydown', handleKeypress, { passive: false });
+		});
+	}
+
+	function updateProgress(loc) {
+		const {page, total} = loc.end.displayed;
+		chapterProgress = (page - 1) + '/' + total;
+		progress = Math.ceil(loc.start.percentage * 100);
+		currentChapter = loc.end.href;
+	}
+
+	let book, metadata, tocData = [];
+	async function loadBook(b) {
+		metadata = b.metadata;
+		tocData = b.toc;
+		book = ePub(b.file);
+
+		rendition = book.renderTo(
+			document.querySelector('main'),
+			{
+				manager: "continuous",
+				width: "100%", allowPopups: true,
+				...(mode == 'swipe'
+					? { flow: "paginated", height: "100%" }
+					: { flow: "scrolled", fullsize: true })
+			});
+
+		hookIframes();
+		injectCSS();
+
+		await book.ready;
+		await book.locations.generate(1024);
+
+		rendition.on('relocated', updateProgress);
+
+		await rendition.display(localStorage.getItem(`${book.key()}-loc`) ?? undefined);
+		await rendition.display(localStorage.getItem(`${book.key()}-loc`) ?? undefined); // second call is a hack to make it work
+		loading = false;
+		updateProgress(rendition.currentLocation())
+	}
+
 	onMount(async () => {
-		mode = localStorage.getItem('mode') ?? 'swipe';
+		mode = localStorage.getItem('mode') ?? 'scroll';
 
 		const books = await getBooks();
 		if (books.length == 0) {
 			location.assign('/');
 		}
-		loadBook(books[books.length - 1]);
+		await loadBook(books[books.length - 1]);
 	});
 
 	let panel = false, showSearch = false;
@@ -186,18 +162,19 @@
 	<meta name="description" content={metadata?.description ?? "No description."} />
 </svelte:head>
 
-<!-- TODO make swipe work only if mode is scroll -->
 <svelte:window
 	on:beforeunload={_ => {
-		// save reader configuration before exiting
-		localStorage.setItem(book.key(), rendition.currentLocation().start.cfi);
+		localStorage.setItem(`${book.key()}-loc`, rendition.currentLocation().start.cfi);
 		localStorage.setItem('mode', mode);
 	}}
-	on:swiperight={() => rendition.next()}
-	on:swipeleft={() => rendition.prev()}
+	on:swiperight={() => mode == 'swipe' && rendition.next()}
+	on:swipeleft={() => mode == 'swipe' && rendition.prev()}
 />
 <svelte:document on:keydown|nonpassive={handleKeypress} />
 
+{#if loading}
+	<div class="loading-background"></div>
+{/if}
 {#if panel}
 	<div
 		class="panel-background"
@@ -205,7 +182,7 @@
 	></div>
 	<div class="panel">
 		{#if showSearch}
-			<Search {book} {rendition} bind:search />
+			<!-- <Search {book} {rendition} bind:search /> -->
 		{:else}
 			<ul class="toc">
 				{#each tocData as t}
@@ -229,6 +206,16 @@
 		width: 100%;
 		height: 100%;
 		background-color: rgba(0,0,0, 0);
+		z-index: 1;
+	}
+
+	.loading-background {
+		position: fixed;
+		top: 0%;
+		left: 0%;
+		width: 100%;
+		height: 100%;
+		background-color: rgb(255, 255, 255);
 		z-index: 1;
 	}
 
