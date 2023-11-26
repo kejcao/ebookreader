@@ -12,7 +12,12 @@
 
 	const dispatch = createEventDispatcher();
 
+
     let open = false;
+    const x = localStorage.getItem(id);
+    if (x !== null) {
+        open = x == 'true' ? true : false;
+    }
 
     function hasChildren() {
         return subitems.length != 0;
@@ -22,9 +27,9 @@
 <li style:padding-left="{depth}em">
     {#if hasChildren()}
         <div
-            on:click={() => {
-                open = !open;
-                return false;
+            on:click|preventDefault={() => {
+                open = localStorage.getItem(id) === 'true' ? false : true;
+                localStorage.setItem(id, open.toString());
             }}
         >
             <a id="chap-{id}"><i>{label.trim()}</i></a>

@@ -1,10 +1,5 @@
 <script>
-	import localForage from 'localforage';
-
-	function readFile(file) {
-		localForage.setItem('ebook', file)
-			.then(() => { location.assign('/reader'); });
-	}
+	import { readBook, getBooks } from "./reader/util.js";
 
 	let input;
 </script>
@@ -18,11 +13,25 @@
         <h1>DRAG EPUB FILES<br />
 			OR <input
 				bind:this={input} style="display:none" type="file"
-				on:change={e => { readFile(e.target.files[0]); }}
+				on:change={e => { readBook(e.target.files[0]); }}
 			/>
             <a href="#" on:click|preventDefault={() => input.click()}>CLICK TO UPLOAD</a>
         </h1>
-        <h3>try out <a href="#" on:click|preventDefault={() => readFile('/jane-austen_pride-and-prejudice.epub')}>Pride & Prejudice</a></h3>
+        <h3>try out <a href="#" on:click|preventDefault={() => readBook('/jane-austen_pride-and-prejudice.epub')}>Pride & Prejudice</a></h3>
+
+		<hr>
+
+		<ul class="history">
+			{#await getBooks()}
+				<li>loading...</li>
+			{:then books}
+				{#each [...books].reverse() as {file, metadata}}
+					<li>
+						<a href="#" on:click|preventDefault={() => readBook(file)}><i>{metadata.title}</i></a> by {metadata.creator}
+					</li>
+				{/each}
+			{/await}
+		</ul>
     </div>
 </div>
 
@@ -32,19 +41,26 @@
 		opacity: .9;
 	}
 
+	.history {
+		height: 14em;
+		list-style-type: none;
+		padding: 0;
+	}
+
+	.history li {
+		padding: .2em 0;
+	}
+
 	.dropZone {
 		display: flex;
 		align-items: center;
 		justify-content: center;
 		text-align: center;
 
-		position: fixed;
-		width: 38em;
-		height: 38em;
-		top: 50%;
-		left: 50%;
-		transform: translate(-50%, -50%);
-
 		opacity: .8;
+	}
+
+	:global(html) {
+		height: 100%;
 	}
 </style>

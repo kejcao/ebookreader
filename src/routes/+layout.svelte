@@ -1,10 +1,5 @@
 <script>
-	import localForage from 'localforage';
-
-	function readFile(file) {
-		localForage.setItem('ebook', file)
-			.then(() => { location.assign('/reader'); });
-	}
+	import { readBook } from "./reader/util.js";
 
 	let dropZone = 'hidden';
 </script>
@@ -20,14 +15,14 @@
 		}
 	}}
 	on:dragover|preventDefault
-	on:drop|preventDefault={e => {
+	on:drop|preventDefault={async e => {
 		if (e.dataTransfer.items) {
 			const item = e.dataTransfer.items[0];
 			if (item.kind == 'file') {
-				readFile(item.getAsFile());
+				await readBook(item.getAsFile());
 			}
 		} else {
-			readFile(e.dataTransfer.files[0]);
+			await readBook(e.dataTransfer.files[0]);
 		}
 		dropZone = 'hidden';
 	}}

@@ -1,172 +1,178 @@
 <script>
-// @ts-nocheck
-
 	import { onMount } from 'svelte';
-	import localForage from 'localforage';
 	import ePub from 'epubjs';
 
 	import Toc from "./TOC.svelte";
-
-	function addFile(file) {
-		localForage.setItem('ebook', file)
-			.then(() => { location.reload(); });
-	}
+	import Search from "./Search.svelte";
+	import { readBook, getBooks } from "./util.js";
 
 	function handleKeypress(e) {
 		switch (e.key) {
-			case 't':
 			case 'Tab':
-				panel = panel == 'visible' ? 'hidden' : 'visible';
 				e.preventDefault();
+				if (showSearch == true) {
+					showSearch = false;
+					break;
+				}
+				panel = !panel;
 				break;
 			case 'Escape':
-				panel = 'hidden';
+				panel = false;
 				break;
-			case 'm':
-				mode = mode == 'swipe' ? 'scroll' : 'swipe';
-				location.reload();
-				break;
+		}
+
+		if (e.ctrlKey) {
+			switch (e.key) {
+				case 'f':
+					showSearch = true;
+					panel = true;
+					e.preventDefault();
+					break;
+				case 'm':
+					mode = mode == 'swipe' ? 'scroll' : 'swipe';
+					location.reload();
+					break;
+			}
+			return
 		}
 
 		if (mode == 'swipe') {
 			switch (e.key) {
-				case 'ArrowRight':
-				case 'l': case 'j':
-				case ' ':
-					rendition.next()
-					break;
-				case 'ArrowLeft':
-				case 'h': case 'k':
-					rendition.prev()
-					break;
+				case 'ArrowRight': rendition.next(); break;
+				case  'ArrowLeft': rendition.prev(); break;
+			}
+
+			if (e.key == ' ') {
+				e.shiftKey
+					? rendition.prev()
+					: rendition.next();
 			}
 		}
 	}
 
-	let mode, metadata, rendition, book, currentChapter, tocData = [];
+	let mode, rendition, currentChapter;
+	let search = { 'query': '', 'results': [] };
 
-	onMount(() => {
-		mode = localStorage.getItem('mode') ?? 'swipe';
+	let book, metadata, tocData = [];
+	function loadBook(b) {
+		metadata = b.metadata;
+		tocData = b.toc;
+		book = ePub(b.file);
 
-		localForage.getItem('ebook', (err, value) => {
-			if (err) {
-				alert('something went wrong');
-				location.assign('/');
-			}
-
-			// if no value stored then return to homepage
-			if (!value) { location.replace('/'); }
-
-			// otherwise initialize the ebook
-			book = ePub(value);
-			rendition = book.renderTo(
-				document.querySelector('main'),
-				mode == 'swipe'
-					? {
-						manager: "continuous",
-						flow: "paginated",
-						width: "100%", height: "100%"
-					}
-					: {
-						manager: "continuous",
-						flow: "scrolled", width: "100%",
-						fullsize: true
-					});
-
-			function updateProgress(loc) {
-				const {page, total} = loc.end.displayed;
-				chapterProgress = (page - 1) + '/' + total;
-				progress = Math.ceil(loc.start.percentage * 100);
-				currentChapter = loc.end.href;
-			}
-
-			// code to get and update percentage
-			book.ready
-				.then(async () => {
-					// we're imitating the book.locations.generate() function
-
-					const locs = book.locations;
-
-					locs.break = 1024;
-
-					let xs = [];
-					locs.spine.each(x => xs.push(x));
-					for (const section of xs) {
-						await (locs.process.bind(locs))(section);
-					}
-
-					locs.total = locs._locations.length - 1;
-					if (locs._currentCfi) {
-						locs.currentLocation = locs._currentCfi;
-					}
-
-					rendition.on('relocated', updateProgress);
+		rendition = book.renderTo(
+			document.querySelector('main'),
+			mode == 'swipe'
+				? {
+					manager: "continuous",
+					flow: "paginated",
+					width: "100%", height: "100%"
+				}
+				: {
+					manager: "continuous",
+					flow: "scrolled", width: "100%",
+					fullsize: true
 				});
 
-			// to make our keybinds work in iframe pages
-			rendition.on('keydown', handleKeypress)
+		function updateProgress(loc) {
+			const {page, total} = loc.end.displayed;
+			chapterProgress = (page - 1) + '/' + total;
+			progress = Math.ceil(loc.start.percentage * 100);
+			currentChapter = loc.end.href;
+		}
 
-			// inject our own CSS to make ebooks look nicer
-			rendition.hooks.content.register(contents => {
-				contents.addStylesheetCss(`
-					p {
-						text-align: justify !important;
-						hyphens: auto !important;
-					}
+		book.loaded.navigation.then(t => {tocData = t.toc;console.log('fuck')});
 
-					html {
-						font-size: 1.1rem !important;
-					}
+		// get and update percentage
+		book.ready
+			.then(async () => {
+				// we're imitating the book.locations.generate() function
 
-					body {
-						font-family: "EB Garamond", serif;
-						${
-							mode == 'scroll'
-								? 'padding: 10em 0 !important;'
-								: ''
-						}
-					}
+				const locs = book.locations;
 
-					img {
-						max-width: 100% !important;
-						height: auto !important;
-						object-fit: contain !important;
-					}
-				`);
-			});
+				locs.break = 1024;
 
-			book.loaded.metadata.then(x => {
-				// try to load the saved reader position
-				let loc = localStorage.getItem(book.key());
-				if (loc) {
-					rendition.display(loc)
-						.then(() => {
-							// this is a hack to make it work
-							rendition._display(loc)
-							updateProgress(rendition.currentLocation())
-						})
-				} else {
-					rendition.display()
-						.then(() => updateProgress(rendition.currentLocation()))
+				let xs = [];
+				locs.spine.each(x => xs.push(x));
+				for (const section of xs) {
+					await (locs.process.bind(locs))(section);
 				}
 
-				// save the metadata (for title and desc)
-				metadata = x;
+				locs.total = locs._locations.length - 1;
+				if (locs._currentCfi) {
+					locs.currentLocation = locs._currentCfi;
+				}
+
+				rendition.on('relocated', updateProgress);
 			});
 
-			// save the table of contents
-			book.loaded.navigation.then(toc => tocData = toc.toc);
+		// to make our keybinds work in iframe pages
+		rendition.on('rendered', (rendition, iframe) => {
+			iframe.document.addEventListener(
+				'keydown', handleKeypress, { passive: false });
 		});
+
+		// inject our own CSS to make ebooks look nicer
+		rendition.hooks.content.register(contents => {
+			contents.addStylesheetCss(`
+				@import url('https://fonts.cdnfonts.com/css/dejavu-serif');
+
+				p {
+					text-align: justify !important;
+					hyphens: auto !important;
+				}
+
+				html, p {
+					font-size: 1.1rem;
+				}
+
+				body {
+					font-family: "DejaVu Serif", serif;
+					${
+						mode == 'scroll'
+							? 'padding: 10em 0 !important;'
+							: ''
+					}
+				}
+
+				img {
+					max-width: 100% !important;
+					height: auto !important;
+					object-fit: contain !important;
+				}
+			`);
+		});
+
+		book.loaded.metadata.then(x => {
+			// try to load the saved reader position
+			let loc = localStorage.getItem(book.key());
+			if (loc) {
+				rendition.display(loc)
+					.then(() => {
+						// this is a hack to make it work
+						rendition._display(loc)
+						updateProgress(rendition.currentLocation())
+					})
+			} else {
+				rendition.display()
+					.then(() => updateProgress(rendition.currentLocation()))
+			}
+		});
+	}
+
+	onMount(async () => {
+		mode = localStorage.getItem('mode') ?? 'swipe';
+
+		const books = await getBooks();
+		if (books.length == 0) {
+			location.assign('/');
+		}
+		loadBook(books[books.length - 1]);
 	});
 
-	let panel = 'hidden';
+	let panel = false, showSearch = false;
 	let progress = 'N/A', chapterProgress = 'N/A';
 
-	// if panel is displayed, then lock the scroll of body element.
-    $: if (typeof document !== 'undefined') {
-		document.body.style.overflow =
-			panel == 'hidden' ? 'auto' : 'hidden';
-	}
+	let results = [];
 
 	$: switch(mode) {
 		case 'swipe':
@@ -178,9 +184,6 @@
 <svelte:head>
 	<title>{metadata?.title ?? 'Untitled'} - eBook Reader</title>
 	<meta name="description" content={metadata?.description ?? "No description."} />
-	<link rel="preconnect" href="https://fonts.googleapis.com">
-	<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-	<link href="https://fonts.googleapis.com/css2?family=EB+Garamond:ital,wght@0,400;0,700;1,400;1,700&display=swap" rel="stylesheet">
 </svelte:head>
 
 <!-- TODO make swipe work only if mode is scroll -->
@@ -193,37 +196,30 @@
 	on:swiperight={() => rendition.next()}
 	on:swipeleft={() => rendition.prev()}
 />
-<svelte:document on:keydown={handleKeypress} />
+<svelte:document on:keydown|nonpassive={handleKeypress} />
 
-<div
-	class="panel-background"
-	style:visibility={panel}
-	on:click={() => panel = 'hidden'}
-></div>
-<div class="panel" style:visibility={panel}>
-	<div>
-		<a
-			href="#"
-			on:click={() => {
-				localForage.clear();
-				location.assign('/');
-				return false;
-			}}
-		>
-			RESTART
-		</a>
+{#if panel}
+	<div
+		class="panel-background"
+		on:click={() => panel = false}
+	></div>
+	<div class="panel">
+		{#if showSearch}
+			<Search {book} {rendition} bind:search />
+		{:else}
+			<ul class="toc">
+				{#each tocData as t}
+					<Toc {...t} {rendition} active={currentChapter}
+						on:close={() => panel = false} />
+				{/each}
+			</ul>
+		{/if}
 	</div>
-	<hr />
-	<ul class="toc">
-		{#each tocData as t}
-			<Toc {...t} {rendition} active={currentChapter}
-				on:close={() => panel = 'hidden'} />
-		{/each}
-	</ul>
-</div>
+{/if}
 <div class="progress">{progress}%</div>
 <div class="chapter-progress">{chapterProgress}</div>
-<main class="{mode == 'swipe' ? 'swipe' : ''}"></main>
+<main class="{mode == 'swipe' ? 'swipe' : ''}">
+</main>
 
 <style>
 	.panel-background {
@@ -244,7 +240,7 @@
 
 		font-family: monospace;
 	}
-	
+
 	.chapter-progress {
 		position: fixed;
 		top: 100%;
@@ -256,19 +252,22 @@
 
 	.panel {
 		position: fixed;
-		width: 38em;
-		height: 60%;
-		top: 50%;
-		left: 50%;
-		transform: translate(-50%, -50%);
+		height: 100%;
+		width: 24em;
+		top: 0;
+		left: 0;
 
-		z-index: 2;
+		/* width: 100%;
+		display: flex;
+		align-items: center;
+		justify-items: center; */
+
+		z-index: 1;
 		overflow-y: scroll;
 
 		background: white;
-		border: 2px solid rgb(37, 37, 37);
-		box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
-		padding: 1em 2em;
+		box-shadow: 0 0 5px -2px black, 0 0 18px -8px black;
+		padding: 0em 1em;
 	}
 
 	/* style TOC entries */
@@ -301,12 +300,12 @@
 	}
 
 	main {
-		width: min(90vw, 32em) !important;
+		width: min(90vw, 48rem) !important;
 	}
 
 	.swipe {
-		width: min(90vw, 35em) !important;
-		height: min(90vh, 56em) !important;
+		width: min(80vw, 52rem) !important;
+		height: min(80vh, 56rem) !important;
 		padding: 2em;
 		box-shadow: 0 0 4px #ccc;
 	}
