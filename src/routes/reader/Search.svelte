@@ -13,14 +13,18 @@
         }
     }
 
-    function around(match) {
-        const previewSize = 20;
+    function around(match, width=58) {
+        const size = width / 2 - match[0].length / 2;
         const {input, index} = match;
 
+        let s = input.slice(Math.max(0, index - size), index)
+        const n = s.padStart(size, '_').length - s.length;
+        for (let i = 0; i < n; ++i) {
+            s = '&nbsp;' + s;
+        }
         return (
-            input.slice(Math.max(0, index - previewSize), index) + 
-            `<span style="color:red">${match[0]}</span>` +
-            input.slice(index + match[0].length, Math.min(input.length, index + previewSize))
+            s + `<span style="color:red">${match[0]}</span>` +
+            input.slice(index + match[0].length, Math.min(input.length, index + size))
         );
     }
 
@@ -83,9 +87,14 @@
 <ul>
     {#each search['results'] as {cfi, excerpt}}
         <li>
-            <a href="#" on:drag|preventDefault on:click|preventDefault={e => rendition.display(cfi)}>
-                {@html excerpt }
-            </a>
+            <div>
+                <a
+                    href="#"
+                    on:click|preventDefault={e => rendition.display(cfi)}
+                >
+                    {@html excerpt}
+                </a>
+            </div>
         </li>
     {/each}
 </ul>
@@ -108,8 +117,16 @@
         padding-top: .8em;
     }
 
-    div {
-        text-align: center;
+    li {
+        font-size: 80%;
+        padding: .2em .6em;
+        line-height: .9em;
+        user-select: none;
+    }
+
+    li:hover {
+        cursor: pointer;
+        background-color: rgba(181, 186, 199, .3);
     }
 
     label {
@@ -123,6 +140,12 @@
         display: flex;
         align-items: center;
     }
+
+	a {
+		text-decoration: none;
+        color: inherit;
+		font-family: monospace;
+	}
 
 	ul {
 		list-style-type: none;

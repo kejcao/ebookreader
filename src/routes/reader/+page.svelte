@@ -2,32 +2,39 @@
 	import { onMount } from 'svelte';
 	import ePub from 'epubjs';
 
-	import Toc from "./TOC.svelte";
-	import Search from "./Search.svelte";
+	import Panel from "./Panel.svelte";
 	import { readBook, getBooks } from "./util.js";
 
 	let loading = true;
 
 	function handleKeypress(e) {
 		switch (e.key) {
-			case 'Tab':
-				e.preventDefault();
-				if (showSearch == true) {
-					showSearch = false;
-					break;
-				}
-				panel = !panel;
-				break;
+			// case 'Tab':
+			// 	e.preventDefault();
+			// 	panel.flip();
+			// 	break;
 			case 'Escape':
-				panel = false;
+				panel.hide();
 				break;
 		}
 
 		if (e.ctrlKey) {
 			switch (e.key) {
+				case 'q':
+					panel.flip();
+					break;
 				case 'f':
-					showSearch = true;
-					panel = true;
+					panel.show();
+					panel.set('search');
+					e.preventDefault();
+					break;
+				case 's':
+					// if (panel == true && panelMode != 'settings') {
+					// 	panelMode = 'settings';
+					// } else {
+					// 	panelMode = 'settings';
+					// 	panel = !panel;
+					// }
 					e.preventDefault();
 					break;
 				case 'm':
@@ -53,46 +60,16 @@
 		}
 	}
 
-	let mode, rendition, currentChapter;
-	let search = { 'query': '', 'results': [] };
+	let mode, style, rendition, currentChapter;
 
 	function injectCSS() {
-		rendition.book.spine.hooks.content.register(doc => {
-			const style = doc.createElement('style');
-			style.innerHTML = `
-				@import url('https://fonts.cdnfonts.com/css/dejavu-serif');
-
-				p {
-					text-align: justify !important;
-					hyphens: auto !important;
-				}
-
-				html, p {
-					font-size: 1.1rem;
-				}
-
-				body {
-					font-family: "DejaVu Serif", serif;
-					${
-						mode == 'scroll'
-							? 'padding: 10em 0 !important;'
-							: ''
-					}
-				}
-
-				img {
-					max-width: 100% !important;
-					height: auto !important;
-					object-fit: contain !important;
-				}
-			`;
-			doc.querySelector('head').appendChild(style);
-		});
+		rendition.hooks.content.register(
+			contents => contents.addStylesheetCss(style));
 	}
 
 	// to make our event listeners work in the iframes
 	function hookIframes() {
-		rendition.on('rendered', (_, iframe) => {
+		rendition.on('rendered', (section, iframe) => {
 			iframe.document.addEventListener(
 				'keydown', handleKeypress, { passive: false });
 		});
@@ -131,12 +108,42 @@
 
 		await rendition.display(localStorage.getItem(`${book.key()}-loc`) ?? undefined);
 		await rendition.display(localStorage.getItem(`${book.key()}-loc`) ?? undefined); // second call is a hack to make it work
-		loading = false;
 		updateProgress(rendition.currentLocation())
+		loading = false;
 	}
+
+	// $: if (style) {
+	// 	injectCSS();
+	// 	rendition.clear();
+	// 	rendition.display();
+	// }
 
 	onMount(async () => {
 		mode = localStorage.getItem('mode') ?? 'scroll';
+		style = `
+@import url('https://fonts.googleapis.com/css2?family=Crimson+Text:ital,wght@0,400;0,700;1,400;1,700&family=EB+Garamond:ital,wght@0,400;0,700;1,400;1,700&display=swap');
+/*@import url('https://fonts.googleapis.com/css2?family=EB+Garamond:ital,wght@0,400;0,700;1,400;1,700&display=swap');*/
+
+p {
+	text-align: justify !important;
+	hyphens: auto !important;
+}
+
+body {
+	font-family: 'Crimson Text', serif;
+	${
+		mode == 'scroll'
+			? 'padding: 10em 0 !important;'
+			: ''
+	}
+}
+
+img {
+	max-width: 100% !important;
+	height: auto !important;
+	object-fit: contain !important;
+}
+		`;
 
 		const books = await getBooks();
 		if (books.length == 0) {
@@ -145,7 +152,7 @@
 		await loadBook(books[books.length - 1]);
 	});
 
-	let panel = false, showSearch = false;
+	let panel;
 	let progress = 'N/A', chapterProgress = 'N/A';
 
 	let results = [];
@@ -175,40 +182,14 @@
 {#if loading}
 	<div class="loading-background"></div>
 {/if}
-{#if panel}
-	<div
-		class="panel-background"
-		on:click={() => panel = false}
-	></div>
-	<div class="panel">
-		{#if showSearch}
-			<!-- <Search {book} {rendition} bind:search /> -->
-		{:else}
-			<ul class="toc">
-				{#each tocData as t}
-					<Toc {...t} {rendition} active={currentChapter}
-						on:close={() => panel = false} />
-				{/each}
-			</ul>
-		{/if}
-	</div>
-{/if}
-<div class="progress">{progress}%</div>
-<div class="chapter-progress">{chapterProgress}</div>
-<main class="{mode == 'swipe' ? 'swipe' : ''}">
-</main>
+<Panel bind:book bind:rendition bind:tocData bind:style bind:currentChapter bind:this={panel} />
+<div>
+	<div class="progress">{progress}%</div>
+	<div class="chapter-progress">{chapterProgress}</div>
+</div>
+<main class="{mode == 'swipe' ? 'swipe' : ''}"></main>
 
 <style>
-	.panel-background {
-		position: fixed;
-		top: 0%;
-		left: 0%;
-		width: 100%;
-		height: 100%;
-		background-color: rgba(0,0,0, 0);
-		z-index: 1;
-	}
-
 	.loading-background {
 		position: fixed;
 		top: 0%;
@@ -237,41 +218,6 @@
 		font-family: monospace;
 	}
 
-	.panel {
-		position: fixed;
-		height: 100%;
-		width: 24em;
-		top: 0;
-		left: 0;
-
-		/* width: 100%;
-		display: flex;
-		align-items: center;
-		justify-items: center; */
-
-		z-index: 1;
-		overflow-y: scroll;
-
-		background: white;
-		box-shadow: 0 0 5px -2px black, 0 0 18px -8px black;
-		padding: 0em 1em;
-	}
-
-	/* style TOC entries */
-	:global(.panel a) {
-		text-decoration: none;
-		color: inherit;
-		font-family: monospace;
-	}
-	:global(.panel a:hover) {
-		font-weight: 700;
-	}
-
-	:global(.toc, .toc ul) {
-		list-style: none;
-		padding: 0;
-	}
-
 	/* hide scroll bar */
 	:global(body::-webkit-scrollbar) {
 		display: none;
@@ -287,11 +233,12 @@
 	}
 
 	main {
-		width: min(90vw, 48rem) !important;
+		/* width: min(90vw, 38rem) !important; */
+		width: 28rem !important;
 	}
 
 	.swipe {
-		width: min(80vw, 52rem) !important;
+		width: min(80vw, 28rem) !important;
 		height: min(80vh, 56rem) !important;
 		padding: 2em;
 		box-shadow: 0 0 4px #ccc;

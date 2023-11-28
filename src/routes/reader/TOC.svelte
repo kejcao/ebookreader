@@ -12,7 +12,6 @@
 
 	const dispatch = createEventDispatcher();
 
-
     let open = false;
     const x = localStorage.getItem(id);
     if (x !== null) {
@@ -24,7 +23,7 @@
     }
 </script>
 
-<li style:padding-left="{depth}em">
+<li>
     {#if hasChildren()}
         <div
             on:click|preventDefault={() => {
@@ -32,7 +31,13 @@
                 localStorage.setItem(id, open.toString());
             }}
         >
-            <a id="chap-{id}"><i>{label.trim()}</i></a>
+            {#each {length: depth} as _, i} &nbsp;&nbsp;&nbsp;&nbsp; {/each}
+            {#if open}
+                <svg stroke="currentColor" fill="currentColor" stroke-width="0" viewBox="0 0 16 16" class="text-outline shrink-0" height="12" width="12" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" clip-rule="evenodd" d="M7.976 10.072l4.357-4.357.62.618L8.284 11h-.618L3 6.333l.619-.618 4.357 4.357z"></path></svg>
+            {:else}
+                <svg stroke="currentColor" fill="currentColor" stroke-width="0" viewBox="0 0 16 16" class="text-outline shrink-0" height="12" width="12" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" clip-rule="evenodd" d="M10.072 8.024L5.715 3.667l.618-.62L11 7.716v.618L6.333 13l-.618-.619 4.357-4.357z"></path></svg>
+            {/if}
+            <a id="chap-{id}"><b>{label.trim()}</b></a>
         </div>
 
         {#if open}
@@ -48,32 +53,48 @@
         {/if}
     {:else}
         <div {href}
-            class={active == href ? 'active' : ''}
+            class:active={active == href}
             on:click|preventDefault={() => {
                 rendition.display(href);
                 dispatch('close');
             }}
         >
+            {#each {length: depth} as _, i} &nbsp;&nbsp;&nbsp;&nbsp; {/each}
             <a id="chap-{id}">{label.trim()}</a>
         </div>
     {/if}
 </li>
 
 <style>
+    svg {
+        position: relative;
+    }
+
     div {
-        padding: .2em 0;
+        padding: .2em .6em;
         line-height: .9em;
         user-select: none;
     }
 
-    .active {
-        text-decoration: underline;
-        color: black;
-    }
-
     div:hover {
         cursor: pointer;
-        font-weight: 700;
-        background-color: rgba(228, 228, 228, .4);
+        background-color: rgba(181, 186, 199, .3);
     }
+    div.active:hover {
+        background-color: rgba(181, 186, 199, .9);
+    }
+
+    .active {
+        background-color: rgba(181, 186, 199, .6);
+    }
+
+	a {
+		text-decoration: none;
+		font-family: monospace;
+	}
+
+	ul {
+		list-style: none;
+		padding: 0;
+	}
 </style>
