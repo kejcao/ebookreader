@@ -79,8 +79,10 @@
 		hookIframes();
 		injectCSS();
 
-		await book.ready;
-		await book.locations.generate(1024);
+		try {
+			await book.ready;
+			await book.locations.generate(1024); // TODO fix
+		} catch(e) { }
 
 		rendition.on('relocated', updateProgress);
 
@@ -128,6 +130,8 @@ img {
 			location.assign('/');
 		}
 		await loadBook(books[books.length - 1]);
+
+		loading = false;
 	});
 
 
