@@ -79,17 +79,18 @@
 		hookIframes();
 		injectCSS();
 
+		await book.ready;
+		await rendition.display(localStorage.getItem(`${book.key()}-loc`) ?? undefined);
+		await rendition.display(localStorage.getItem(`${book.key()}-loc`) ?? undefined); // second call is a hack to make it work
+
+		loading = false;
+
 		try {
-			await book.ready;
 			await book.locations.generate(1024); // TODO fix
 		} catch(e) { }
 
 		rendition.on('relocated', updateProgress);
-
-		await rendition.display(localStorage.getItem(`${book.key()}-loc`) ?? undefined);
-		await rendition.display(localStorage.getItem(`${book.key()}-loc`) ?? undefined); // second call is a hack to make it work
 		updateProgress(rendition.currentLocation())
-		loading = false;
 	}
 
 	// $: if (style) {
@@ -104,12 +105,10 @@
 @import url('https://fonts.googleapis.com/css2?family=Crimson+Text:ital,wght@0,400;0,700;1,400;1,700&family=EB+Garamond:ital,wght@0,400;0,700;1,400;1,700&display=swap');
 /*@import url('https://fonts.googleapis.com/css2?family=EB+Garamond:ital,wght@0,400;0,700;1,400;1,700&display=swap');*/
 
-p {
+body {
 	text-align: justify !important;
 	hyphens: auto !important;
-}
-
-body {
+	background-color: rgba(0,0,0,0) !important;
 	font-family: 'Crimson Text', serif;
 	${
 		mode == 'scroll'
@@ -119,7 +118,7 @@ body {
 }
 
 img {
-	max-width: 100% !important;
+	max-width: 28em !important;
 	height: auto !important;
 	object-fit: contain !important;
 }
@@ -130,8 +129,6 @@ img {
 			location.assign('/');
 		}
 		await loadBook(books[books.length - 1]);
-
-		loading = false;
 	});
 
 
@@ -205,7 +202,7 @@ img {
 	main {
 		overflow: auto;
 		flex: 2;
-		max-width: 28em;
+		max-width: 28em; /* don't change this without changing img max-width */
 		margin: 0 auto;
 		padding: 0 2em;
 	}
