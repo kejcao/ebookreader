@@ -24,20 +24,19 @@ export async function readBook(file) {
 
     if (books.length == 0 || !equals(file, books.at(-1).file)) {
         const b = await ePub(file);
-        const prefix = (await b.loaded.spine).items[0].href.match(/.*\//);
+        // const prefix = (await b.loaded.spine).items[0].href.match(/.*\//);
 
-        // holy shit this is bad
-        function f(section) {
-            if (!section.href.toLowerCase().startsWith('text/')) {
-                section.href = prefix + section.href;
-            }
-            section.subitems = section.subitems.map(f);
-            return section;
-        }
+        // // holy shit this is bad
+        // function f(section) {
+        //     if (!section.href.toLowerCase().startsWith('text/')) {
+        //         section.href = prefix + section.href;
+        //     }
+        //     section.subitems = section.subitems.map(f);
+        //     return section;
+        // }
 
         books.push({
             'metadata': await b.loaded.metadata,
-            'toc': (await b.loaded.navigation).toc.map(f),
             'file': file
         });
     }

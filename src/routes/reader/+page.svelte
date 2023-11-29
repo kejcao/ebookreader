@@ -8,33 +8,13 @@
 	let loading = true;
 
 	function handleKeypress(e) {
-		switch (e.key) {
-			// case 'Tab':
-			// 	e.preventDefault();
-			// 	panel.flip();
-			// 	break;
-			case 'Escape':
-				panel.hide();
-				break;
-		}
-
 		if (e.ctrlKey) {
 			switch (e.key) {
-				case 'q':
-					panel.flip();
-					break;
 				case 'f':
-					panel.show();
 					panel.set('search');
 					e.preventDefault();
 					break;
 				case 's':
-					// if (panel == true && panelMode != 'settings') {
-					// 	panelMode = 'settings';
-					// } else {
-					// 	panelMode = 'settings';
-					// 	panel = !panel;
-					// }
 					e.preventDefault();
 					break;
 				case 'm':
@@ -77,17 +57,15 @@
 
 	function updateProgress(loc) {
 		const {page, total} = loc.end.displayed;
-		chapterProgress = (page - 1) + '/' + total;
-		progress = Math.ceil(loc.start.percentage * 100);
+		progress = `${(page - 1) + '/' + total} (${Math.ceil(loc.start.percentage * 100)}%)`;
 		currentChapter = loc.end.href;
 	}
 
-	let book, metadata, tocData = [];
+	let book, metadata;
 	async function loadBook(b) {
 		metadata = b.metadata;
-		tocData = b.toc;
-		book = ePub(b.file);
 
+		book = ePub(b.file);
 		rendition = book.renderTo(
 			document.querySelector('main'),
 			{
@@ -152,8 +130,9 @@ img {
 		await loadBook(books[books.length - 1]);
 	});
 
+
 	let panel;
-	let progress = 'N/A', chapterProgress = 'N/A';
+	let progress = 'N/A';
 
 	let results = [];
 
@@ -182,40 +161,27 @@ img {
 {#if loading}
 	<div class="loading-background"></div>
 {/if}
-<Panel bind:book bind:rendition bind:tocData bind:style bind:currentChapter bind:this={panel} />
-<div>
-	<div class="progress">{progress}%</div>
-	<div class="chapter-progress">{chapterProgress}</div>
+<div class="viewer">
+	{#if book}
+		<Panel bind:book bind:rendition bind:style bind:currentChapter bind:progress bind:this={panel} />
+	{/if}
+	<main class="{mode == 'swipe' ? 'swipe' : ''}"></main>
 </div>
-<main class="{mode == 'swipe' ? 'swipe' : ''}"></main>
 
 <style>
+	.viewer {
+		display: flex;
+	}
+
 	.loading-background {
+		cursor: wait;
 		position: fixed;
-		top: 0%;
-		left: 0%;
+		left: 0;
+		top: 0;
 		width: 100%;
 		height: 100%;
-		background-color: rgb(255, 255, 255);
+		background-color: #fff;
 		z-index: 1;
-	}
-
-	.progress {
-		position: fixed;
-		top: 100%;
-		left: 100%;
-		transform: translate(-100%, -100%);
-
-		font-family: monospace;
-	}
-
-	.chapter-progress {
-		position: fixed;
-		top: 100%;
-		left: 0%;
-		transform: translate(0%, -100%);
-
-		font-family: monospace;
 	}
 
 	/* hide scroll bar */
@@ -233,8 +199,11 @@ img {
 	}
 
 	main {
-		/* width: min(90vw, 38rem) !important; */
-		width: 28rem !important;
+		overflow: auto;
+		flex: 2;
+		max-width: 28em;
+		margin: 0 auto;
+		padding: 0 2em;
 	}
 
 	.swipe {

@@ -13,7 +13,7 @@
         }
     }
 
-    function around(match, width=58) {
+    function around(match, width=42) {
         const size = width / 2 - match[0].length / 2;
         const {input, index} = match;
 

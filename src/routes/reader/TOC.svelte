@@ -56,6 +56,7 @@
             class:active={active == href}
             on:click|preventDefault={() => {
                 rendition.display(href);
+                rendition.display(href);
                 dispatch('close');
             }}
         >
@@ -71,7 +72,7 @@
     }
 
     div {
-        padding: .2em .6em;
+        padding: .4em .6em;
         line-height: .9em;
         user-select: none;
     }

@@ -60,13 +60,6 @@
 	}
 
 	:global(body) {
-		max-width: 38rem;
-		margin: 2em auto;
-		box-sizing: border-box;
-		display: flex;
-		align-items: center;
-		justify-content: center;
-		height: 100%;
-		margin: 0 auto;
+		margin: 0;
 	}
 </style>
