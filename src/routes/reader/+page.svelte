@@ -57,7 +57,8 @@
 
 	function updateProgress(loc) {
 		const {page, total} = loc.end.displayed;
-		progress = `${(page - 1) + '/' + total} (${Math.ceil(loc.start.percentage * 100)}%)`;
+		bookProgress = Math.ceil(loc.start.percentage * 100);
+		pageProgress = (page - 1) + '/' + total;
 		currentChapter = loc.end.href;
 	}
 
@@ -133,7 +134,7 @@ img {
 
 
 	let panel;
-	let progress = 'N/A';
+	let bookProgress, pageProgress;
 
 	let results = [];
 
@@ -164,7 +165,7 @@ img {
 {/if}
 <div class="viewer">
 	{#if book}
-		<Panel bind:book bind:rendition bind:style bind:currentChapter bind:progress bind:this={panel} />
+		<Panel bind:book bind:rendition bind:style bind:currentChapter bind:bookProgress bind:pageProgress bind:this={panel} />
 	{/if}
 	<main class="{mode == 'swipe' ? 'swipe' : ''}"></main>
 </div>

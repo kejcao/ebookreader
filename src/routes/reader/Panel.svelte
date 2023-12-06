@@ -1,5 +1,5 @@
 <script>
-    export let book, rendition, currentChapter, style, progress;
+    export let book, rendition, currentChapter, style, bookProgress;
 
 	import Toc from "./TOC.svelte";
 	import Search from "./Search.svelte";
@@ -24,11 +24,15 @@
 		return nav.map(f);
 	}
 
+	$: if (typeof(bookProgress) !== "undefined") {
+		document.querySelector('progress').value = bookProgress;
+	}
+
     export function set(s) { state = s; }
 </script>
 
 <div>
-	<p>{progress}</p>
+	<progress max="100"></progress>
 	<nav>
 		<ul>
 			<li class={state == 'toc' ? 'active' : ''} on:click={() => set('toc')}>toc</li>
@@ -56,6 +60,12 @@
 </div>
 
 <style>
+	progress {
+		width: 100%;
+		position: sticky;
+		top: 0;
+	}
+
 	div {
 		height: 100dvh;
 		position: sticky;
