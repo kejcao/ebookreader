@@ -45,7 +45,7 @@
                 {#each subitems as child}
                     <svelte:self
                         {...child} {rendition} {active}
-                        depth={depth + 1.5}
+                        depth={depth + 1}
                         on:close={() => dispatch('close')}
                     />
                 {/each}
@@ -72,8 +72,8 @@
     }
 
     div {
-        padding: .4em .6em;
-        line-height: .9em;
+        padding: .6em .6em;
+        line-height: 1em;
         user-select: none;
     }
 
