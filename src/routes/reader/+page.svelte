@@ -58,7 +58,7 @@
 	function updateProgress(loc) {
 		const {page, total} = loc.end.displayed;
 		bookProgress = Math.ceil(loc.start.percentage * 100);
-		pageProgress = (page - 1) + '/' + total;
+		pageProgress = Math.ceil(((page - 1) / total) * 100);
 		currentChapter = loc.end.href;
 	}
 

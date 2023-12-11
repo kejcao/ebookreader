@@ -30,14 +30,15 @@
                 open = localStorage.getItem(id) === 'true' ? false : true;
                 localStorage.setItem(id, open.toString());
             }}
+            style:padding-left="{depth*3 + 1 - .8}em"
         >
-            {#each {length: depth} as _, i} &nbsp;&nbsp;&nbsp;&nbsp; {/each}
+            <!-- {#each {length: depth} as _, i} &nbsp;&nbsp;&nbsp;&nbsp; {/each} -->
             {#if open}
                 <svg stroke="currentColor" fill="currentColor" stroke-width="0" viewBox="0 0 16 16" class="text-outline shrink-0" height="12" width="12" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" clip-rule="evenodd" d="M7.976 10.072l4.357-4.357.62.618L8.284 11h-.618L3 6.333l.619-.618 4.357 4.357z"></path></svg>
             {:else}
                 <svg stroke="currentColor" fill="currentColor" stroke-width="0" viewBox="0 0 16 16" class="text-outline shrink-0" height="12" width="12" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" clip-rule="evenodd" d="M10.072 8.024L5.715 3.667l.618-.62L11 7.716v.618L6.333 13l-.618-.619 4.357-4.357z"></path></svg>
             {/if}
-            <a id="chap-{id}"><b>{label.trim()}</b></a>
+            <a id="chap-{id}">{label.trim()}</a>
         </div>
 
         {#if open}
@@ -59,8 +60,9 @@
                 rendition.display(href);
                 dispatch('close');
             }}
+            style:padding-left="{depth*3 + 1}em"
         >
-            {#each {length: depth} as _, i} &nbsp;&nbsp;&nbsp;&nbsp; {/each}
+            <!-- {#each {length: depth} as _, i} &nbsp;&nbsp;&nbsp;&nbsp; {/each} -->
             <a id="chap-{id}">{label.trim()}</a>
         </div>
     {/if}
@@ -75,6 +77,7 @@
         padding: .6em .6em;
         line-height: 1em;
         user-select: none;
+        resize: horizontal;
     }
 
     div:hover {
