@@ -26,9 +26,11 @@
 
 	$: if (typeof(bookProgress) !== "undefined") {
 		document.querySelector('#book').value = bookProgress;
+		document.querySelector('#book').title = bookProgress + '%';
 	}
 	$: if (typeof(pageProgress) !== "undefined") {
 		document.querySelector('#page').value = pageProgress;
+		document.querySelector('#page').title = pageProgress + '%';
 	}
 
 
@@ -65,16 +67,40 @@
 </div>
 
 <style>
-	#book {
-		width: 100%;
-		position: sticky;
-		top: 0;
+	progress:first-child {
+		margin-top: 6px;
 	}
 
-	#page {
+	progress {
+		appearance: none;
 		width: 100%;
-		position: sticky;
-		top: 0;
+		height: 1.2em;
+		margin: 2px;
+	}
+
+	progress::-webkit-progress-bar {
+		background: white;
+		border: 1px solid gray;
+		border-radius: 4px;
+	}
+
+	progress::-webkit-progress-value {
+		background: gray;
+		opacity: .5;
+	}
+
+	progress::before {
+		content: attr(value)'%';
+		position: absolute;
+		left: 50%;
+		font-family: monospace;
+		transform: translateX(-50%);
+		font-weight: 700;
+	}
+
+	progress:not([value])::before {
+		content: 'loading...';
+		font-weight: 700;
 	}
 
 	div {
