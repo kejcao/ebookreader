@@ -1,5 +1,5 @@
 <script>
-    export let book, rendition, currentChapter, style, bookProgress, pageProgress;
+    export let book, rendition, currentChapter, style, progress;
 
 	import Toc from "./TOC.svelte";
 	import Search from "./Search.svelte";
@@ -24,22 +24,17 @@
 		return nav.map(f);
 	}
 
-	$: if (typeof(bookProgress) !== "undefined") {
-		document.querySelector('#book').value = bookProgress;
-		document.querySelector('#book').title = bookProgress + '%';
+	$: if (typeof(progress) !== "undefined") {
+		const [percentage, ..._] = progress.split(' ');
+		document.querySelector('#book').value = parseInt(percentage);
+		document.querySelector('#book').title = progress;
 	}
-	$: if (typeof(pageProgress) !== "undefined") {
-		document.querySelector('#page').value = pageProgress;
-		document.querySelector('#page').title = pageProgress + '%';
-	}
-
 
     export function set(s) { state = s; }
 </script>
 
 <div>
 	<progress id="book" max="100"></progress>
-	<progress id="page" max="100"></progress>
 	<nav>
 		<ul>
 			<li class={state == 'toc' ? 'active' : ''} on:click={() => set('toc')}>toc</li>
@@ -67,15 +62,14 @@
 </div>
 
 <style>
-	progress:first-child {
-		margin-top: 6px;
-	}
-
 	progress {
+		position: sticky;
+		margin: 2px;
+		margin-top: 6px;
 		appearance: none;
 		width: 100%;
 		height: 1.2em;
-		margin: 2px;
+		background: white;
 	}
 
 	progress::-webkit-progress-bar {
@@ -85,22 +79,27 @@
 	}
 
 	progress::-webkit-progress-value {
-		background: gray;
+		/* background: lightgray; */
+		background: repeating-linear-gradient(
+			45deg,
+			lightgray,
+			lightgray 10px,
+			rgb(180, 180, 180) 10px,
+			rgb(180, 180, 180) 20px
+		);
 		opacity: .5;
 	}
 
 	progress::before {
-		content: attr(value)'%';
+		z-index: 999;
+		content: attr(title);
 		position: absolute;
 		left: 50%;
-		font-family: monospace;
 		transform: translateX(-50%);
-		font-weight: 700;
 	}
 
 	progress:not([value])::before {
 		content: 'loading...';
-		font-weight: 700;
 	}
 
 	div {

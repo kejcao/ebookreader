@@ -57,8 +57,7 @@
 
 	function updateProgress(loc) {
 		const {page, total} = loc.end.displayed;
-		bookProgress = Math.ceil(loc.start.percentage * 100);
-		pageProgress = Math.ceil(((page - 1) / total) * 100);
+		progress = `${Math.ceil(loc.start.percentage * 100)}% (${page - 1}/${total})`;
 		currentChapter = loc.end.href;
 	}
 
@@ -87,7 +86,7 @@
 		loading = false;
 
 		try {
-			await book.locations.generate(1024); // TODO fix
+			await book.locations.generate(48); // TODO fix
 		} catch(e) { }
 
 		rendition.on('relocated', updateProgress);
@@ -120,7 +119,7 @@ body {
 
 img {
 	max-width: 28em !important;
-	height: auto !important;
+	height: auto;
 	object-fit: contain !important;
 }
 		`;
@@ -134,7 +133,7 @@ img {
 
 
 	let panel;
-	let bookProgress, pageProgress;
+	let progress;
 
 	let results = [];
 
@@ -165,7 +164,7 @@ img {
 {/if}
 <div class="viewer">
 	{#if book}
-		<Panel bind:book bind:rendition bind:style bind:currentChapter bind:bookProgress bind:pageProgress bind:this={panel} />
+		<Panel bind:book bind:rendition bind:style bind:currentChapter bind:progress={progress} bind:this={panel} />
 	{/if}
 	<main class="{mode == 'swipe' ? 'swipe' : ''}"></main>
 </div>
