@@ -8,13 +8,19 @@
 	let loading = true;
 
 	function handleKeypress(e) {
+		if (e.key == 'Escape' && showPanel) {
+			showPanel = false;
+			return false;
+		}
+		if (e.key == 't' && !showPanel) {
+			showPanel = true;
+			return false;
+		}
+
 		if (e.ctrlKey) {
 			switch (e.key) {
 				case 'f':
 					panel.set('search');
-					e.preventDefault();
-					break;
-				case 's':
 					e.preventDefault();
 					break;
 				case 'm':
@@ -118,7 +124,7 @@ body {
 }
 
 img {
-	max-width: 28em !important;
+	/* max-width: 28em !important; */
 	height: auto;
 	object-fit: contain !important;
 }
@@ -132,7 +138,7 @@ img {
 	});
 
 
-	let panel;
+	let panel, showPanel = false;
 	let progress;
 
 	let results = [];
@@ -162,9 +168,21 @@ img {
 {#if loading}
 	<div class="loading-background"></div>
 {/if}
+
+<svg
+	width="28px" height="28px" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"
+	on:click|preventDefault={() => showPanel = !showPanel}
+>
+	<path d="M5 7H19" stroke="#000000" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+	<path d="M5 12L19 12" stroke="#000000" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+	<path d="M5 17L19 17" stroke="#000000" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>
+
 <div class="viewer">
 	{#if book}
-		<Panel bind:book bind:rendition bind:style bind:currentChapter bind:progress={progress} bind:this={panel} />
+		<div class="panel" style:visibility={showPanel ? 'visible' : 'hidden'}>
+			<Panel bind:book bind:rendition bind:style bind:currentChapter bind:progress bind:this={panel} />
+		</div>
 	{/if}
 	<main class="{mode == 'swipe' ? 'swipe' : ''}"></main>
 </div>
@@ -172,6 +190,20 @@ img {
 <style>
 	.viewer {
 		display: flex;
+	}
+
+	.panel {
+		position: fixed;
+		left: 0;
+		top: 0;
+		width: 24em;
+		z-index: 1;
+	}
+
+	svg {
+		position: fixed;
+		top: 1px;
+		left: 2px;
 	}
 
 	.loading-background {
@@ -204,7 +236,8 @@ img {
 		flex: 2;
 		max-width: 28em; /* don't change this without changing img max-width */
 		margin: 0 auto;
-		padding: 0 2em;
+		/* padding: 0 2em; */
+		padding: 0;
 	}
 
 	.swipe {

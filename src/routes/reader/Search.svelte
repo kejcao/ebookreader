@@ -71,7 +71,7 @@
 <form>
     <input
         bind:value={search.query}
-        type="text" autofocus
+        type="text" inputmode="search" autofocus
         on:keypress={async e => {
             if (e.which == 10 || e.which == 13) {
                 await updateSearchResults();

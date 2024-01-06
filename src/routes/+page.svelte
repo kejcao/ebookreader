@@ -4,7 +4,7 @@
 	let input;
 </script>
 
-<div class="dropZone">
+<main>
     <div>
         <svg width="16em" height="16em" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
             <path d="M12 16V22M12 16L14 18M12 16L10 18" stroke="#1C274C" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
@@ -13,7 +13,7 @@
         <h1>DRAG EPUB FILES<br />
 			OR <input
 				bind:this={input} style="display:none" type="file"
-				on:change={e => { readBook(e.target.files[0]); }}
+				on:change={e => readBook(e.target.files[0])}
 			/>
             <a href="#" on:click|preventDefault={() => input.click()}>CLICK TO UPLOAD</a>
         </h1>
@@ -23,21 +23,24 @@
 
 		<ul class="history">
 			{#await getBooks()}
-				<li>loading...</li>
+				loading...
 			{:then books}
 				{#each [...books].reverse() as {file, metadata}}
-					<li>
-						<a href="#" on:click|preventDefault={() => readBook(file)}><i>{metadata.title}</i></a> by {metadata.creator}
-					</li>
+					<a
+						href="#"
+						on:click|preventDefault={() => readBook(file)}
+					>
+						<li><i>{metadata.title}</i></li>
+					</a>
 				{/each}
 			{/await}
 		</ul>
     </div>
-</div>
+</main>
 
 <style>
-	.dropZone h1,
-	.dropZone h3 {
+	main h1,
+	main h3 {
 		opacity: .9;
 	}
 
@@ -48,10 +51,25 @@
 	}
 
 	.history li {
-		padding: .2em 0;
+		max-width: 28em;
+		padding: 1em 0;
+		border: solid 1px gray;
+		margin: 1em 0;
+		padding: 1em;
+		border-radius: 3px;
 	}
 
-	.dropZone {
+	.history li:hover {
+		background: lightgray;
+		cursor: pointer;
+	}
+
+	.history a {
+		text-decoration: none;
+		color: inherit;
+	}
+
+	main {
 		display: flex;
 		align-items: center;
 		justify-content: center;

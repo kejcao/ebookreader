@@ -38,7 +38,7 @@
 	<nav>
 		<ul>
 			<li class={state == 'toc' ? 'active' : ''} on:click={() => set('toc')}>toc</li>
-			<li class={state == 'settings' ? 'active' : ''} on:click={() => set('settings')}>settings</li>
+			<!-- <li class={state == 'settings' ? 'active' : ''} on:click={() => set('settings')}>settings</li> -->
 			<li class={state == 'search' ? 'active' : ''} on:click={() => set('search')}>search</li>
 		</ul>
 	</nav>
@@ -64,18 +64,18 @@
 <style>
 	progress {
 		position: sticky;
-		margin: 2px;
+		margin: 0;
 		margin-top: 6px;
 		appearance: none;
 		width: 100%;
-		height: 1.2em;
+		height: 2em;
 		background: white;
 	}
 
 	progress::-webkit-progress-bar {
 		background: white;
 		border: 1px solid gray;
-		border-radius: 4px;
+		border-radius: 2px;
 	}
 
 	progress::-webkit-progress-value {
@@ -91,9 +91,11 @@
 	}
 
 	progress::before {
-		z-index: 999;
 		content: attr(title);
+
+		z-index: 999;
 		position: absolute;
+		top: 20%;
 		left: 50%;
 		transform: translateX(-50%);
 	}
@@ -140,7 +142,14 @@
 		display: inline;
 		text-align: center;
         padding: .6em 0;
-        border-bottom: 1px solid #dee2e6;
+        border-bottom: 1px solid gray;
+		border: 1px solid white;
+    }
+
+    nav li:not(.active) {
+        border-bottom: 1px solid gray;
+		background-color: whitesmoke;
+		/* color: gray; */
     }
 
     nav li:hover {
@@ -148,14 +157,14 @@
     }
 
     nav li:hover:not(.active) {
-        border-radius: .25rem;
-        background-color: #dee2e640;
+        background-color: lightgray;
     }
 
     li.active {
-		border: 1px solid #dee2e6;
-        border-top-left-radius: .5rem;
-        border-top-right-radius: .5rem;
+		font-weight: 700;
+		border: 1px solid gray;
+        border-top-left-radius: 2px;
+        border-top-right-radius: 2px;
         border-bottom: 0;
     }
 
