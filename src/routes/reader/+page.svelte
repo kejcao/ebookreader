@@ -20,6 +20,7 @@
 		if (e.ctrlKey) {
 			switch (e.key) {
 				case 'f':
+					showPanel = true;
 					panel.set('search');
 					e.preventDefault();
 					break;
