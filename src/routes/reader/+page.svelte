@@ -169,14 +169,18 @@ img {
 	<div class="loading-background"></div>
 {/if}
 
-<svg
-	width="28px" height="28px" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"
-	on:click|preventDefault={() => showPanel = !showPanel}
->
-	<path d="M5 7H19" stroke="#000000" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
-	<path d="M5 12L19 12" stroke="#000000" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
-	<path d="M5 17L19 17" stroke="#000000" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+<button type="button" on:click|preventDefault={() => showPanel = !showPanel}>
+	<svg width="800px" height="800px" viewBox="0 0 24 24" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+		<g id="Page-1" stroke="none" stroke-width="1" fill="none" fill-rule="evenodd">
+			<g id="Menu">
+				<rect id="Rectangle" fill-rule="nonzero" x="0" y="0" width="24" height="24"></rect>
+				<line x1="5" y1="7" x2="19" y2="7" id="Path" stroke="#0C0310" stroke-width="2" stroke-linecap="round"></line>
+				<line x1="5" y1="17" x2="19" y2="17" id="Path" stroke="#0C0310" stroke-width="2" stroke-linecap="round"></line>
+				<line x1="5" y1="12" x2="19" y2="12" id="Path" stroke="#0C0310" stroke-width="2" stroke-linecap="round"></line>
+			</g>
+		</g>
 </svg>
+</button>
 
 <div class="viewer">
 	{#if book}
@@ -200,10 +204,18 @@ img {
 		z-index: 1;
 	}
 
-	svg {
+	button > svg {
 		position: fixed;
 		top: 1px;
 		left: 2px;
+		width: 32px;
+		height: 32px;
+		opacity: .7;
+	}
+
+	button > svg:hover {
+		opacity: 1;
+		cursor: pointer;
 	}
 
 	.loading-background {
