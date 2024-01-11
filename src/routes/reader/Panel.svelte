@@ -1,18 +1,22 @@
 <script>
-    export let book, rendition, currentChapter, style, progress;
+	export let book, rendition, currentChapter, style, progress;
 
 	import Toc from "./TOC.svelte";
 	import Search from "./Search.svelte";
-    import { onMount } from "svelte";
+	import { onMount } from "svelte";
 
-    let state = 'toc', states = {};
-	let search = { 'query': '', 'results': [] };
+	let state = "toc",
+		states = {};
+	let search = { query: "", results: [] };
 
 	// see https://github.com/futurepress/epub.js/issues/1084#issuecomment-647002309
 	function fixNav(nav) {
 		function reorient(url) {
-			const base = 'https://example.invalid/';
-			return new URL(url, base + (book.packaging.navPath || book.packaging.ncxPath)).href.replace(base, '')
+			const base = "https://example.invalid/";
+			return new URL(
+				url,
+				base + (book.packaging.navPath || book.packaging.ncxPath),
+			).href.replace(base, "");
 		}
 
 		function f(section) {
@@ -24,28 +28,46 @@
 		return nav.map(f);
 	}
 
-	$: if (typeof(progress) !== "undefined") {
-		const [percentage, ..._] = progress.split(' ');
-		document.querySelector('#book').value = parseInt(percentage);
-		document.querySelector('#book').title = progress;
+	$: if (typeof progress !== "undefined") {
+		const [percentage, ..._] = progress.split(" ");
+		document.querySelector("#book").value = parseInt(percentage);
+		document.querySelector("#book").title = progress;
 	}
 
-    export function set(s) { state = s; }
+	export function set(s) {
+		state = s;
+	}
 </script>
 
-<div>
+<section>
+	<!-- <svg
+		width="800px" height="800px" viewBox="0 0 1024 1024" xmlns="http://www.w3.org/2000/svg"
+		on:click|preventDefault={() => showPanel = false}
+	>
+		<path fill="#000000" d="M195.2 195.2a64 64 0 0 1 90.496 0L512 421.504 738.304 195.2a64 64 0 0 1 90.496 90.496L602.496 512 828.8 738.304a64 64 0 0 1-90.496 90.496L512 602.496 285.696 828.8a64 64 0 0 1-90.496-90.496L421.504 512 195.2 285.696a64 64 0 0 1 0-90.496z"/>
+	</svg> -->
 	<progress id="book" max="100"></progress>
 	<nav>
 		<ul>
-			<li class={state == 'toc' ? 'active' : ''} on:click={() => set('toc')}>toc</li>
+			<li
+				class={state == "toc" ? "active" : ""}
+				on:click={() => set("toc")}
+			>
+				toc
+			</li>
 			<!-- <li class={state == 'settings' ? 'active' : ''} on:click={() => set('settings')}>settings</li> -->
-			<li class={state == 'search' ? 'active' : ''} on:click={() => set('search')}>search</li>
+			<li
+				class={state == "search" ? "active" : ""}
+				on:click={() => set("search")}
+			>
+				search
+			</li>
 		</ul>
 	</nav>
 
-	{#if state == 'search'}
+	{#if state == "search"}
 		<Search {book} {rendition} bind:search />
-	{:else if state == 'settings'}
+	{:else if state == "settings"}
 		<textarea bind:value={style}></textarea>
 	{:else}
 		<ul class="toc">
@@ -53,58 +75,56 @@
 				loading...
 			{:then nav}
 				{#each fixNav(nav.toc) as t}
-					<Toc {...t} {rendition} active={currentChapter}
-						on:close={() => {}} />
+					<Toc
+						{...t}
+						{rendition}
+						active={currentChapter}
+						on:close={() => {}}
+					/>
 				{/each}
 			{/await}
 		</ul>
 	{/if}
-</div>
+</section>
 
 <style>
 	progress {
-		position: sticky;
 		margin: 0;
 		margin-top: 6px;
 		appearance: none;
 		width: 100%;
 		height: 2em;
 		background: white;
+
+		&::-webkit-progress-bar {
+			background: white;
+			border: 1px solid gray;
+			border-radius: 2px;
+		}
+		&::-webkit-progress-value {
+			background: repeating-linear-gradient(
+				-45deg,
+				lightgray,
+				lightgray 10px,
+				rgb(180, 180, 180) 10px,
+				rgb(180, 180, 180) 20px
+			);
+			opacity: 0.5;
+		}
+
+		&:not([value])::-webkit-progress-bar {
+			background: repeating-linear-gradient(
+				-45deg,
+				lightgray,
+				lightgray 10px,
+				rgb(180, 180, 180) 10px,
+				rgb(180, 180, 180) 20px
+			);
+			opacity: 0.2;
+		}
 	}
 
-	progress::-webkit-progress-bar {
-		background: white;
-		border: 1px solid gray;
-		border-radius: 2px;
-	}
-
-	progress::-webkit-progress-value {
-		/* background: lightgray; */
-		background: repeating-linear-gradient(
-			45deg,
-			lightgray,
-			lightgray 10px,
-			rgb(180, 180, 180) 10px,
-			rgb(180, 180, 180) 20px
-		);
-		opacity: .5;
-	}
-
-	progress::before {
-		content: attr(title);
-
-		z-index: 999;
-		position: absolute;
-		top: 20%;
-		left: 50%;
-		transform: translateX(-50%);
-	}
-
-	progress:not([value])::before {
-		content: 'loading...';
-	}
-
-	div {
+	section {
 		height: 100dvh;
 		position: sticky;
 		top: 0;
@@ -112,65 +132,60 @@
 
 		overflow-y: scroll;
 		background: white;
-		box-shadow: 0 0 5px -2px black, 0 0 18px -12px black;
+		box-shadow:
+			0 0 5px -2px black,
+			0 0 18px -12px black;
 		padding: 0em 1em;
 		font-family: monospace;
-	}
 
-	div::-webkit-scrollbar {
-		display: none;
-	}
-	div {
 		scrollbar-width: none;
 		-ms-overflow-style: none;
+		&::-webkit-scrollbar {
+			display: none;
+		}
 	}
-	
+
 	ul {
 		list-style: none;
 		padding: 0;
 	}
 
 	nav > ul {
-		margin: .5em 0;
+		margin: 0.5em 0;
 		padding: 0;
 		display: flex;
 		width: 100%;
 	}
 
-	nav li {
-		flex: 1;
-		display: inline;
-		text-align: center;
-        padding: .6em 0;
-        border-bottom: 1px solid gray;
-		border: 1px solid white;
-    }
+	nav {
+		& li {
+			flex: 1;
+			display: inline;
+			text-align: center;
+			padding: 0.6em 0;
+			border-bottom: 1px solid gray;
+			border: 1px solid white;
+		}
 
-    nav li:not(.active) {
-        border-bottom: 1px solid gray;
-		background-color: whitesmoke;
-		/* color: gray; */
-    }
+		& li:not(.active) {
+			border-bottom: 1px solid gray;
+			background-color: whitesmoke;
+		}
 
-    nav li:hover {
-        cursor: pointer;
-    }
+		& li:hover {
+			cursor: pointer;
+		}
 
-    nav li:hover:not(.active) {
-        background-color: lightgray;
-    }
+		& li:hover:not(.active) {
+			background-color: lightgray;
+		}
+	}
 
-    li.active {
+	li.active {
 		font-weight: 700;
 		border: 1px solid gray;
-        border-top-left-radius: 2px;
-        border-top-right-radius: 2px;
-        border-bottom: 0;
-    }
-
-	/* textarea {
-		margin-top: 1em;
-		width: 95%;
-		height: 95%;
-	} */
+		border-top-left-radius: 2px;
+		border-top-right-radius: 2px;
+		border-bottom: 0;
+	}
 </style>
