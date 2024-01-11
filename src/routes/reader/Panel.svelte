@@ -1,12 +1,10 @@
 <script>
-	export let book, rendition, currentChapter, style, progress;
+	export let book, rendition, currentChapter, style, progress, showPanel;
 
 	import Toc from "./TOC.svelte";
 	import Search from "./Search.svelte";
-	import { onMount } from "svelte";
 
-	let state = "toc",
-		states = {};
+	let state = "toc";
 	let search = { query: "", results: [] };
 
 	// see https://github.com/futurepress/epub.js/issues/1084#issuecomment-647002309
@@ -40,13 +38,25 @@
 </script>
 
 <section>
-	<!-- <svg
-		width="800px" height="800px" viewBox="0 0 1024 1024" xmlns="http://www.w3.org/2000/svg"
-		on:click|preventDefault={() => showPanel = false}
-	>
-		<path fill="#000000" d="M195.2 195.2a64 64 0 0 1 90.496 0L512 421.504 738.304 195.2a64 64 0 0 1 90.496 90.496L602.496 512 828.8 738.304a64 64 0 0 1-90.496 90.496L512 602.496 285.696 828.8a64 64 0 0 1-90.496-90.496L421.504 512 195.2 285.696a64 64 0 0 1 0-90.496z"/>
-	</svg> -->
-	<progress id="book" max="100"></progress>
+	<div>
+		<button
+			type="button"
+			on:click|preventDefault={() => (showPanel = false)}
+		>
+			<svg
+				role="img"
+				viewBox="0 0 1024 1024"
+				xmlns="http://www.w3.org/2000/svg"
+			>
+				<path
+					fill="#000000"
+					d="M195.2 195.2a64 64 0 0 1 90.496 0L512 421.504 738.304 195.2a64 64 0 0 1 90.496 90.496L602.496 512 828.8 738.304a64 64 0 0 1-90.496 90.496L512 602.496 285.696 828.8a64 64 0 0 1-90.496-90.496L421.504 512 195.2 285.696a64 64 0 0 1 0-90.496z"
+				/>
+			</svg>
+		</button>
+		<progress id="book" max="100"></progress>
+	</div>
+
 	<nav>
 		<ul>
 			<li
@@ -88,12 +98,36 @@
 </section>
 
 <style>
+	div {
+		margin-top: 6px;
+		display: flex;
+	}
+
+	button {
+		width: 32px;
+		height: 32px;
+		padding: 0;
+		margin-right: 4px;
+
+		appearance: none;
+		border: none;
+		background-color: transparent;
+
+		& > svg {
+			opacity: 0.7;
+
+			&:hover {
+				opacity: 1;
+				cursor: pointer;
+			}
+		}
+	}
+
 	progress {
 		margin: 0;
-		margin-top: 6px;
 		appearance: none;
 		width: 100%;
-		height: 2em;
+		height: auto;
 		background: white;
 
 		&::-webkit-progress-bar {
