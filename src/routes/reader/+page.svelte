@@ -171,7 +171,8 @@ img {
 {/if}
 
 <button type="button" on:click|preventDefault={() => showPanel = !showPanel}>
-	<svg width="800px" height="800px" viewBox="0 0 24 24" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+	<svg role="img" viewBox="0 0 24 24" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+		<title>Hamburger Menu Icon</title>
 		<g id="Page-1" stroke="none" stroke-width="1" fill="none" fill-rule="evenodd">
 			<g id="Menu">
 				<rect id="Rectangle" fill-rule="nonzero" x="0" y="0" width="24" height="24"></rect>
@@ -205,18 +206,26 @@ img {
 		z-index: 1;
 	}
 
-	button > svg {
+	button {
 		position: fixed;
 		top: 1px;
-		left: 2px;
+		left: 1px;
 		width: 32px;
 		height: 32px;
-		opacity: .7;
-	}
+		padding: 0;
 
-	button > svg:hover {
+		appearance: none;
+		border: none;
+		background-color: transparent;
+
+		& > svg {
+		opacity: .7;
+
+			&:hover {
 		opacity: 1;
 		cursor: pointer;
+			}
+		}
 	}
 
 	.loading-background {
