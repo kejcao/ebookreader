@@ -95,19 +95,19 @@
     }>
     <div>
         <input
-            type="checkbox"
+            type="checkbox" id="input1"
             on:change={async () => await updateSearchResults()}
             bind:checked={caseSensitivity}
         />
-        <label>case</label>
+        <label for="input1">case</label>
     </div>
     <div>
         <input
-            type="checkbox"
+            type="checkbox" id="input2"
             on:change={async () => await updateSearchResults()}
             bind:checked={matchWords}
         />
-        <label>word</label>
+        <label for="input2">word</label>
     </div>
 </form>
 
