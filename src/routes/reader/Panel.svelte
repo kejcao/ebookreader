@@ -29,7 +29,7 @@
 	$: if (typeof progress !== "undefined") {
 		const [percentage, ..._] = progress.split(" ");
 		document.querySelector("#book").value = parseInt(percentage);
-		document.querySelector("#book").title = progress;
+		document.querySelector("#progress").innerHTML = progress;
 	}
 
 	export function set(s) {
@@ -43,20 +43,18 @@
 			type="button"
 			on:click|preventDefault={() => (showPanel = false)}
 		>
-			<svg
-				role="img"
-				viewBox="0 0 1024 1024"
-				xmlns="http://www.w3.org/2000/svg"
-			>
-				<path
-					fill="#000000"
-					d="M195.2 195.2a64 64 0 0 1 90.496 0L512 421.504 738.304 195.2a64 64 0 0 1 90.496 90.496L602.496 512 828.8 738.304a64 64 0 0 1-90.496 90.496L512 602.496 285.696 828.8a64 64 0 0 1-90.496-90.496L421.504 512 195.2 285.696a64 64 0 0 1 0-90.496z"
-				/>
-			</svg>
+			CLOSE
 		</button>
-		<progress id="book" max="100"></progress>
+		<span id="progress">NaN% (0/0)</span>
+		<button
+			type="button"
+			on:click|preventDefault={() => window.location.assign('/')}
+		>
+			HOME
+		</button>
 	</div>
 
+	<progress id="book" max="100"></progress>
 	<nav>
 		<ul>
 			<li
@@ -99,35 +97,35 @@
 
 <style>
 	div {
-		margin-top: 6px;
 		display: flex;
+		align-items: center;
+		justify-content: space-around;
+		width: 100%;
 	}
 
 	button {
-		width: 32px;
-		height: 32px;
-		padding: 0;
-		margin-right: 4px;
+		font-family: monospace;
+		height: 1.6em;
+		margin-top: 6px;
+		opacity: 0.9;
+		text-decoration: underline;
 
 		appearance: none;
 		border: none;
 		background-color: transparent;
+	}
 
-		& > svg {
-			opacity: 0.7;
-
-			&:hover {
-				opacity: 1;
-				cursor: pointer;
-			}
-		}
+	button:hover {
+		color: blue;
+		cursor: pointer;
 	}
 
 	progress {
 		margin: 0;
+		margin-top: 6px;
 		appearance: none;
 		width: 100%;
-		height: auto;
+		height: 2em;
 		background: white;
 
 		&::-webkit-progress-bar {
@@ -192,6 +190,8 @@
 	}
 
 	nav {
+		width: 100%;
+
 		& li {
 			flex: 1;
 			display: inline;
