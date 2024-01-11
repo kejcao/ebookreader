@@ -28,7 +28,12 @@
         );
     }
 
+    function savePosition() {
+        prevCfi = rendition.currentLocation().start.cfi;
+    }
+
     async function updateSearchResults() {
+        savePosition();
         async function getResults() {
             if (!search.query) {
                 return [];
@@ -65,8 +70,17 @@
         search.results = await getResults();
     }
 
-    let previousHighlight;
+    let previousHighlight, prevCfi;
 </script>
+
+{#if prevCfi}
+    <a
+        href="#" draggable="false" class="normal"
+        on:click={e => rendition.display(prevCfi)}
+    >
+        back to position before search
+    </a>
+{/if}
 
 <form>
     <input
@@ -199,7 +213,7 @@
         color: gray;
     }
 
-	a {
+	a:not(.normal) {
 		text-decoration: none;
         color: inherit;
 		font-family: monospace;
