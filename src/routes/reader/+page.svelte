@@ -181,13 +181,13 @@ img {
 				<line x1="5" y1="12" x2="19" y2="12" id="Path" stroke="#0C0310" stroke-width="2" stroke-linecap="round"></line>
 			</g>
 		</g>
-</svg>
+	</svg>
 </button>
 
 <div class="viewer">
 	{#if book}
 		<div class="panel" style:visibility={showPanel ? 'visible' : 'hidden'}>
-			<Panel bind:book bind:rendition bind:style bind:currentChapter bind:progress bind:this={panel} />
+			<Panel bind:book bind:rendition bind:style bind:currentChapter bind:progress bind:this={panel} bind:showPanel={showPanel} />
 		</div>
 	{/if}
 	<main class="{mode == 'swipe' ? 'swipe' : ''}"></main>
@@ -219,11 +219,11 @@ img {
 		background-color: transparent;
 
 		& > svg {
-		opacity: .7;
+			opacity: .7;
 
 			&:hover {
-		opacity: 1;
-		cursor: pointer;
+				opacity: 1;
+				cursor: pointer;
 			}
 		}
 	}
