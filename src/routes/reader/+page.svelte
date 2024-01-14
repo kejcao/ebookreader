@@ -127,7 +127,6 @@ body {
 img {
 	max-width: 100% !important;
 	object-fit: contain !important;
-	height: auto;
 }
 		`;
 
